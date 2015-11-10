@@ -72,4 +72,3 @@ val set_metadata : doc_id -> doc_metadata -> bool Deferred.t
  * Sets the patch list of a document.
  *)
 val set_patches : doc_id -> patch list -> bool Deferred.t
-

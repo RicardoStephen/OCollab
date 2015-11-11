@@ -1,22 +1,11 @@
-
+(*Cursor position*)
 type position
 
-(*Inserting or deleting text at certain position*)
-val delete_text : document -> position -> document * patch
-val insert_text : document -> position -> document * patch
+(*Handler for inserting or deleting text at certain position - will use CodeMirror*)
+val handle_edit_event : unit -> unit
 
-(*Finding search phrase within a given document*)
-val find : document -> string -> position
+val apply_patches : patch list -> unit
 
-(* Sending patches to server*)
-val patches_to_server : patch list -> unit
+(* Sending patches to server*)  (*send: a patch and cursor position, receive: patch list from server  *)
+val patches_to_server : patch list -> position -> unit
 
-(* Not needed, done in document.mli
-(* List of patches for the document *)
-val current_patches_list : patch list
-*)
-
-(* Not needed, done with delete_text and insert_text
-(* Add a patch to a document *)
-val add_patch : patch list -> patch list
-*)

@@ -8,12 +8,9 @@ open Async.Std
 
 type doc_id = string
 
-type doc_key = string
-
 type doc_metadata = {
   id : doc_id;
   title : string;
-  key : doc_key;
 }
 
 type doc = {

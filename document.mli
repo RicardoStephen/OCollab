@@ -6,21 +6,13 @@
 
 open Async.Std
 
-type doc_id = string
+type doc_id
 
-type doc_key = string
+type doc_key
 
-type doc_metadata = {
-  id : doc_id;
-  title : string;
-  key : doc_key;
-}
+type doc_metadata
 
-type doc = {
-  id : string;
-  metadata : doc_metadata;
-  patches : patch list;
-}
+type doc
 
 (*
  * Root directory of the document storage. This variable defaults to
@@ -31,44 +23,46 @@ val root : string
 (*
  * Checks if a document id exists in the storage.
  *)
-val exists : doc_id -> bool Deferred.t
+val doc_exists : doc_id -> bool Deferred.t
 
 (*
  * Creates a document and returns its id.
  *)
-val create : unit -> doc_id Deferred.t
+val doc_create : unit -> doc_id Deferred.t
 
 (*
  * Returns a list of document ids in the storage.
  *)
-val get_list_documents : unit -> doc_id list Deferred.t
+val get_doc_list : unit -> doc_id list Deferred.t
 
 (*
  * Retrieves a document given an id.
  *)
-val get : doc_id -> doc option Deferred.t
+val get_doc : doc_id -> doc option Deferred.t
 
 (*
  * Retrieves document metadata given an id.
  *)
-val get_metadata : doc_id -> doc_metadata
+val get_doc_metadata : doc_id -> doc_metadata
 
 (*
  * Retrieves document patches given an id.
+ * Returns the last n patches (or all patches if n is -1.
  *)
-val get_patches : doc_id -> patch list
+val get_doc_patches : doc_id -> int -> Patch.patch list
 
 (*
  * Sets the contents of a document.
  *)
-val set : doc_id -> doc -> bool Deferred.t
+val set_doc : doc_id -> doc -> bool Deferred.t
 
 (*
  * Sets the metadata of a document.
  *)
-val set_metadata : doc_id -> doc_metadata -> bool Deferred.t
+val set_doc_metadata : doc_id -> doc_metadata -> bool Deferred.t
 
 (*
- * Sets the patch list of a document.
+ * Add patches to a document.
  *)
-val set_patches : doc_id -> patch list -> bool Deferred.t
+val add_doc_patches : doc_id -> Patch.patch list -> bool Deferred.t
+

@@ -17,10 +17,12 @@
 
 open Patch
 
-(* composed of doc_id, patch *)
+type selection
+
+(* composed of doc_id, patch, selection *)
 type request
 
-(* composed of doc_id, patch, document text*)
+(* composed of doc_id, patch, document text, selection list*)
 type response
 
 val parse_req_id: request -> doc_id

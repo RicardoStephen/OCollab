@@ -15,15 +15,8 @@
    allows the server to parse json from gui, do server-side manipulations on pathches,
    and interface with the storage system? *)
 
-
-
 open Async.Std
 open Patch
-
-(* Serialized to a format to use for HTTP requests *)
-type serialized
-
-type library
 
 (* composed of doc_id, patch *)
 type request
@@ -31,25 +24,21 @@ type request
 (* composed of doc_id, patch, document text*)
 type response
 
-val serialize : patch -> serialized
+val parse_req_id: request -> doc_id
 
-val deserialize : serialized -> patch
+val parse_req_patch: request -> patch
 
-val parse_document_id: request -> doc_id
+val parse_resp_id: response -> doc_id
 
-val parse_serialized: request -> serialized
+val parse_resp_patch: response -> patch
 
-val gen_request:
+val parse_resp_text: response -> document_text
 
-(* modify the current document *)
-(* Handles multiple documents *)
-val modify
+val gen_request: doc_id -> patch -> request
 
-(* Handle new document requests *)
-(* *)
+val gen_response: doc_id -> patch -> document_text -> response
 
-
-
+val handle_request: request -> response
 
 
 module My_app =

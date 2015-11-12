@@ -39,3 +39,5 @@ val apply_patches : patch list -> unit
 
 (* Sending patches to server*)  (*send: a patch and cursor position, receive: patch list from server  *)
 val patches_to_server : patch list -> position -> unit
+
+val gen_request: doc_id -> patch -> request

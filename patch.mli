@@ -59,4 +59,4 @@ val merge : patch -> patch -> (patch, patch)
 (*
  * Applies a patch to modify a document represented as a string.
  *)
-val apply_patch : document_test -> patch -> document_test
+val apply_patch : document_text -> patch -> document_text

@@ -2,7 +2,7 @@ open Interface
 open Patch
 open Document
 
-(* gui.ml will be compiled to js and will be sent from server to client *)
+(* gui.ml will be compiled to js and will be sent from the server to the client *)
 
 (* Reference: https://codemirror.net/doc/manual.html, esp. Basic Usage,
    Configuration, Events *)
@@ -20,7 +20,8 @@ val fetch_document : unit -> unit
    CodeMirror, which will trigger events*)
 val handle_edit_event : unit -> unit
 
-(* Need an event or something that requests for updates from the server. *)
+(* Need an event or something that requests for updates from the server even
+ * when no modifications were made locally. *)
 val fetch_updates : response -> unit
 
 val request_updates : request -> (response -> unit) -> unit

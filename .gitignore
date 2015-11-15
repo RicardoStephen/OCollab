@@ -1,2 +1,6 @@
 _cs3110
 _build
+
+*.swp
+*.byte
+*.js

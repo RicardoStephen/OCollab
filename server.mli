@@ -1,4 +1,7 @@
 open Interface
+open Document
+open Patch
+open Storage
 
 val gen_response: doc_id -> patch -> document_text -> response
 

@@ -3,4 +3,4 @@ _build
 
 *.swp
 *.byte
-*.js
+gui_test.js

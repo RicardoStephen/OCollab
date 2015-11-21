@@ -5,10 +5,12 @@
 all: test run
 	@echo "Nothing here"
 
-compile:
+compile: gui_test.js
 	@echo "Compile"
-	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax \-syntax camlp4o -linkpkg -o gui_test.byte gui_test.ml
-	js_of_ocaml gui_test.byte
+
+gui_test.js:
+	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax \-syntax camlp4o -linkpkg -o _build/gui_test.byte gui_test.ml
+	js_of_ocaml _build/gui_test.byte
 
 test: compile
 	@echo "Test"

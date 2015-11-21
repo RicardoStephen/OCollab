@@ -7,6 +7,8 @@ all: test run
 
 compile:
 	@echo "Compile"
+	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax \-syntax camlp4o -linkpkg -o gui_test.byte gui_test.ml
+	js_of_ocaml gui_test.byte
 
 test: compile
 	@echo "Test"

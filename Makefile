@@ -1,5 +1,5 @@
 
-.PHONY: all
+.PHONY: all eliom_test
 
 
 all: test run
@@ -11,6 +11,12 @@ compile: gui_test.js
 gui_test.js:
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax \-syntax camlp4o -linkpkg -o _build/gui_test.byte gui_test.ml
 	js_of_ocaml _build/gui_test.byte
+
+eliom_test: 
+	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax \-syntax camlp4o -linkpkg -o eliom_test/static/gui_js.byte eliom_test/gui_js.ml
+	js_of_ocaml eliom_test/static/gui_js.byte
+	cd eliom_test && $(MAKE) test.byte
+
 
 test: compile
 	@echo "Test"

@@ -7,22 +7,29 @@ type operation
 
 type patch
 
+type document_text
+
 (*
  * A patch which represents doing nothing to a document.
  *)
-val empty : patch
+val empty_patch : patch
+
+(*
+ * Empty document text
+ *)
+val empty_doc: document_text
 
 (*
  * Adds an operation to a patch.
  *)
 val add_op : operation -> patch -> patch
 
-(* 
+(*
  * Compute the inverse of a patch, which represents undoing a patch.
  *)
 val inverse : patch -> patch
 
-(* 
+(*
  * Composes two patches in order to form a new patch representing doing patch1
  * and then patch2.
  *)
@@ -52,4 +59,4 @@ val merge : patch -> patch -> (patch, patch)
 (*
  * Applies a patch to modify a document represented as a string.
  *)
-val apply_patch : string -> patch -> string
+val apply_patch : document_text -> patch -> document_text

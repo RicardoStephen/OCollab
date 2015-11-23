@@ -1,7 +1,10 @@
 (*
  * Document Module
- *
- * TODO Optimization (or does that go on a higher level?)
+ * 
+ * Provides types for document data, consisting of a unique ID, a list of
+ * patches, and the current iteration of a document.
+ * 
+ * TODO Document optimization (?)
  *)
 
 open Patch

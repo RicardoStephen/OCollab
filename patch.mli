@@ -5,6 +5,8 @@
 
 type operation
 
+type edit
+
 type patch
 
 type document_text
@@ -22,7 +24,7 @@ val empty_doc: document_text
 (*
  * Adds an operation to a patch.
  *)
-val add_op : operation -> patch -> patch
+val add_edit : edit -> patch -> patch
 
 (*
  * Compute the inverse of a patch, which represents undoing a patch.

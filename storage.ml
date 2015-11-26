@@ -36,7 +36,7 @@ let document_create ctl =
         if exists ctl key then
           try_create (count - 1)
         else
-          if hset ctl key "id" id then
+          if set ctl key id then
             id
           else
             None
@@ -55,7 +55,11 @@ let get_document ctl id =
       None
 
 let get_document_metadata ctl id =
-  failwith "TODO later"
+  let open Redis_sync.Client in
+    if exists ctl ("document:" ^ id ^ "metadata") then
+      failwith "TODO now"
+    else
+      None
 
 let get_document_patches ctl id =
   failwith "TODO later"
@@ -63,10 +67,10 @@ let get_document_patches ctl id =
 let set_document ctl id doc =
   let open Redis_sync.Client in
   let key = "document:" ^ doc.id in
-  (hset ctl key "id" doc.id) &&
-  (hset ctl key "metadata" "TODO now") &&
-  (hset ctl key "patches" "TODO now") &&
-  (hset ctl key "text" "TODO now")
+  (set ctl key doc.id) &&
+  (set ctl (key ^ ":metadata") "TODO now") &&
+  (set ctl (key ^ ":patches") "TODO now") &&
+  (set ctl (key ^ ":text") "TODO now")
 
 let set_document_metadata ctl id data =
   let open Redis_sync.Client in
@@ -75,7 +79,11 @@ let set_document_metadata ctl id data =
 
 let add_document_patches ctl id patches =
   let open Redis_sync.Client in
-  let key = "document:" ^ doc.id in
-  (hset ctl key "patches" "TODO now")
+  let key = "document:" ^ doc.id ^ ":patche" in
+  (set ctl key "patches" "TODO now")
+
+let set_document_text ctl id text =
+  let open Redis_sync.Client in
+  
 
 (* TODO now, add text additions *)

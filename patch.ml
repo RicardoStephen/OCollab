@@ -35,3 +35,7 @@ let inverse patch =
 let merge p1 p2 = failwith "unimplemented"
 
 let apply_patch doc patch = failwith "unimplemented"
+
+let string_of_patch p = failwith "unimplemented"
+
+let patch_of_string p = failwith "unimplemented"

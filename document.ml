@@ -19,3 +19,9 @@ type document = {
     patches: patch list;
     text: document_text
   }
+
+let string_of_document doc =
+  failwith "TODO now"
+
+let document_of_string doc =
+  failwith "TODO now"

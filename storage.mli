@@ -33,18 +33,21 @@ val get_document_list : controller -> document_id list
 (*
  * Retrieves a document given an id.
  *)
-val get_document : controller -> document_id -> document option
+val get_document : controller -> document_id
+  -> document option
 
 (*
  * Retrieves document metadata given an id.
  *)
-val get_document_metadata : controller -> document_id -> document_metadata
+val get_document_metadata : controller -> document_id
+  -> document_metadata option
 
 (*
  * Retrieves document patches given an id.
  * Returns the last n patches (or all patches if n is -1).
  *)
-val get_document_patches : controller -> document_id -> int -> patch list
+val get_document_patches : controller -> document_id -> int
+  -> patch list option
 
 (*
  * Sets the contents of a document.

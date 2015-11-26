@@ -1,48 +1,66 @@
 (*
- * Storage Module
+ * Document Storage Module
  * 
- * Handles document storage.
+ * Handles document storage using Redis.
  *)
 
 open Document
 
+type controller
+
 (*
- * Creates a document and returns its id.
+ * Initialize the Redis connection at a given inet address and port. The
+ * controller returned is used for any subsequent operation on this
+ * connection. Returns None if no connection could be made
  *)
-val document_create : unit -> document_id
+val storage_open : string -> int -> controller option
+
+(*
+ * Close the Redis connection.
+ *)
+val storage_close : controller -> unit
+
+(*
+ * Creates a document and returns its id, or None if creation failed.
+ *)
+val document_create : controller -> document_id option
 
 (*
  * Returns a list of document ids in the storage.
  *)
-val get_document_list : unit -> document_id list
+val get_document_list : controller -> document_id list
 
 (*
  * Retrieves a document given an id.
  *)
-val get_document : document_id -> document option
+val get_document : controller -> document_id
+  -> document option
 
 (*
  * Retrieves document metadata given an id.
  *)
-val get_document_metadata : document_id -> document_metadata
+val get_document_metadata : controller -> document_id
+  -> document_metadata option
 
 (*
  * Retrieves document patches given an id.
  * Returns the last n patches (or all patches if n is -1).
  *)
-val get_document_patches : document_id -> int -> patch list
+val get_document_patches : controller -> document_id -> int
+  -> patch list option
 
 (*
  * Sets the contents of a document.
  *)
-val set_document : document_id -> document -> bool
+val set_document : controller -> document_id -> document -> bool
 
 (*
  * Sets the metadata of a document.
  *)
-val set_document_metadata : document_id -> document_metadata -> bool
+val set_document_metadata : controller -> document_id
+  -> document_metadata -> bool
 
 (*
  * Adds patches to a document.
  *)
-val add_document_patches : document_id -> patch list -> bool
+val add_document_patches : controller -> document_id -> patch list -> bool

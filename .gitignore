@@ -3,4 +3,6 @@ _build
 
 *.swp
 *.byte
+*.cmi
+*.cmo
 gui_test.js

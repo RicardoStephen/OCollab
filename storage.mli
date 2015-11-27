@@ -16,7 +16,22 @@ type controller
  *)
 val storage_open : string -> int -> controller option
 
+type controller
+
 (*
+ * Initialize the Redis connection at a given inet address and port. The
+ * controller returned is used for any subsequent operation on this
+ * connection. Returns None if no connection could be made
+ *)
+val storage_open : string -> int -> controller option
+
+(*
+ * Close the Redis connection.
+ *)
+val storage_close : controller -> unit
+
+(*
+<<<<<<< HEAD
  * Close the Redis connection.
  *)
 val storage_close : controller -> unit
@@ -24,6 +39,10 @@ val storage_close : controller -> unit
 (*
  * Creates a document and returns its id, or None if creation failed.
  *)
+=======
+ * Creates a document and returns its id, or None if creation failed.
+ *)
+>>>>>>> 39637a9383aa5377fe275972ad84e97357d8c378
 val document_create : controller -> document_id option
 
 (*
@@ -47,12 +66,17 @@ val get_document_metadata : controller -> document_id
  * Retrieves document patches given an id.
  * Returns the last n patches (or all patches if n is -1).
  *)
+<<<<<<< HEAD
 val get_document_patches : controller -> document_id -> int -> patch list option
 
 (*
  * Retrieves document full text given an id.
  *)
 val get_document_text : controller -> document_id -> document_text option
+=======
+val get_document_patches : controller -> document_id -> int
+  -> patch list option
+>>>>>>> 39637a9383aa5377fe275972ad84e97357d8c378
 
 (*
  * Sets the contents of a document.
@@ -79,3 +103,4 @@ val add_document_patches : controller -> document_id -> patch list -> bool
  * Sets the full text of a document.
  *)
 val set_document_text : controller -> document_id -> document_text -> bool
+

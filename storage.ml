@@ -90,4 +90,3 @@ let set_document_text ctl id text =
   let key = "document:" ^ id ^ ":text" in
   set ctl key text
 
-(* TODO now, add text additions *)

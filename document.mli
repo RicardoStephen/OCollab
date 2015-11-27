@@ -9,13 +9,21 @@
 
 open Patch
 
-type document_id
+type document_id = string
 
-type document_metadata
+type document_metadata = {
+    title: string
+    (* Created, modified, views, etc. *)
+  }
 
-type document_text
+type document_text = string
 
-type document
+type document = {
+    id: document_id;
+    metadata: document_metadata;
+    patches: patch list;
+    text: document_text
+  }
 
 (*
  * Converts a document to a string representation.

@@ -3,13 +3,13 @@
  *
  *)
 
-type operation
+type operation = Insert | Delete
 
-type edit
+type edit = {op : operation; pos : int; text : string}
 
-type patch
+type patch = edit list
 
-type document_text
+type document_text = string
 
 (*
  * A patch which represents doing nothing to a document.

@@ -4,10 +4,15 @@
  * Handles document storage using Redis.
  *)
 
-open Document
 open Patch
+open Document
+open Redis
 
-type controller
+type controller = {
+    addr: string;
+    port: int;
+    conn: Redis_sync.Client.connection
+  }
 
 (*
  * Initialize the Redis connection at a given inet address and port. The
@@ -15,8 +20,6 @@ type controller
  * connection. Returns None if no connection could be made
  *)
 val storage_open : string -> int -> controller option
-
-type controller
 
 (*
  * Initialize the Redis connection at a given inet address and port. The
@@ -31,18 +34,8 @@ val storage_open : string -> int -> controller option
 val storage_close : controller -> unit
 
 (*
-<<<<<<< HEAD
- * Close the Redis connection.
- *)
-val storage_close : controller -> unit
-
-(*
  * Creates a document and returns its id, or None if creation failed.
  *)
-=======
- * Creates a document and returns its id, or None if creation failed.
- *)
->>>>>>> 39637a9383aa5377fe275972ad84e97357d8c378
 val document_create : controller -> document_id option
 
 (*
@@ -51,48 +44,30 @@ val document_create : controller -> document_id option
 val get_document_list : controller -> document_id list
 
 (*
- * Retrieves a document given an id.
- *)
-val get_document : controller -> document_id
-  -> document option
-
-(*
  * Retrieves document metadata given an id.
  *)
-val get_document_metadata : controller -> document_id
-  -> document_metadata option
+val get_document_metadata : controller -> document_id -> document_metadata option
 
 (*
  * Retrieves document patches given an id.
  * Returns the last n patches (or all patches if n is -1).
  *)
-<<<<<<< HEAD
 val get_document_patches : controller -> document_id -> int -> patch list option
 
 (*
  * Retrieves document full text given an id.
  *)
 val get_document_text : controller -> document_id -> document_text option
-=======
-val get_document_patches : controller -> document_id -> int
-  -> patch list option
->>>>>>> 39637a9383aa5377fe275972ad84e97357d8c378
 
 (*
- * Sets the contents of a document.
+ * Retrieves a document given an id.
  *)
-val set_document : controller -> document_id -> document -> bool
+val get_document : controller -> document_id -> document option
 
 (*
  * Sets the metadata of a document.
  *)
-val set_document_metadata : controller -> document_id
-  -> document_metadata -> bool
-
-(*
- * Sets the patches ofa  document.
- *)
-val set_document_patches : controller -> document_id -> patch list -> bool
+val set_document_metadata : controller -> document_id -> document_metadata -> bool
 
 (*
  * Adds patches to a document.
@@ -100,7 +75,16 @@ val set_document_patches : controller -> document_id -> patch list -> bool
 val add_document_patches : controller -> document_id -> patch list -> bool
 
 (*
+ * Sets the patches ofa  document.
+ *)
+val set_document_patches : controller -> document_id -> patch list -> bool
+
+(*
  * Sets the full text of a document.
  *)
 val set_document_text : controller -> document_id -> document_text -> bool
 
+(*
+ * Sets the contents of a document.
+ *)
+val set_document : controller -> document_id -> document -> bool

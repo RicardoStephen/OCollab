@@ -1,0 +1,43 @@
+<html>
+<head>
+  <title>Collaborative Text Editor</title>
+  <script type="text/javascript">
+
+window.addEventListener("load", function() {
+  if (location.search.length < 2) { // Home page
+    var b = document.createElement("button");
+    b.innerHTML = "Create a document";
+    var out = document.createElement("div");
+    b.addEventListener("click", function() {
+      var req = new XMLHttpRequest();
+      req.open("GET", "/create", true);
+      req.onload = function(e) {
+        if (this.status == 200) {
+          var id = this.responseText;
+          var newloc = "/?" + id;
+          out.innerHTML += "<a href=\"" + newloc + "\">Document created</a>";
+          setTimeout(function() {
+            location.href = newloc;
+          }, 2000);
+        }
+      };
+      req.onerror = function(e) {
+        out.innerHTML += "<div style=\"color:red\">Failed to create a document.</div>";
+      };
+      req.send();
+    });
+    document.body.appendChild(b);
+    document.body.appendChild(document.createElement("br"));
+    document.body.appendChild(out);
+  }
+  else {
+    var id = location.search.substring(1);
+    console.log(id);
+  }
+});
+
+  </script>
+</head>
+<body>
+</body>
+</html>

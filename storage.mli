@@ -50,7 +50,7 @@ val get_document_metadata : controller -> document_id -> document_metadata optio
 
 (*
  * Retrieves document patches given an id.
- * Returns the last n patches (or all patches if n is -1).
+ * Returns the last n patches (or all patches if n is 0).
  *)
 val get_document_patches : controller -> document_id -> int -> patch list option
 

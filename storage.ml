@@ -38,33 +38,53 @@ let document_create ctl =
       if exists conn key then
         try_create (count - 1)
       else
-        (set conn key id; Some id)
+        (set conn key id; ignore (sadd conn "documents" id); Some id)
   in
   (* Try 100 times to create a new document *)
   try_create 100
 
 let get_document_list ctl =
-  failwith "TODO later"
+  let open Redis_sync.Client in
+  let conn = ctl.conn in
+  smembers conn "documents"
 
 let get_document_metadata ctl id =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  if exists conn ("document:" ^ id ^ "metadata") then
-    failwith "TODO now"
+  let key = "document:" ^ id ^ ":metadata" in
+  if exists conn key then
+    match hget conn key "title" with
+    | Some t -> Some ({ title = t })
+    | None -> None
   else
     None
 
-let get_document_patches ctl id =
-  failwith "TODO later"
+let get_document_patches ctl id n =
+  let open Redis_sync.Client in
+  let conn = ctl.conn in
+  let key = "document:" ^ id ^ ":patches" in
+  if exists conn key then
+    Some (List.map (fun s -> patch_of_string s) (lrange conn key (-n) (-1)))
+  else
+    None
 
 let get_document_text ctl id =
-  failwith "TODO later"
+  let open Redis_sync.Client in
+  let conn = ctl.conn in
+  let key = "document:" ^ id ^ ":text" in
+  get conn key
 
 let get_document ctl id =
   let open Redis_sync.Client in
   let conn = ctl.conn in
   if exists conn ("document:" ^ id) then
-    failwith "TODO now"
+    let m = get_document_metadata ctl id in
+    let p = get_document_patches ctl id 0 in
+    let t = get_document_text ctl id in
+    match m, p, t with
+    | Some m, Some p, Some t ->
+      Some ({ id = id; metadata = m; patches = p; text = t })
+    | _, _, _ -> None
   else
     None
 

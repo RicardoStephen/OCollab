@@ -36,24 +36,24 @@ let inverse p =
 
 let merge p1 p2 =
   let flip (a, b) = (b, a) in
-  let merge_edit e1 e2 =
+  let rec merge_edit e1 e2 =
     if e1.pos > e2.pos then flip (merge_edit e2 e1) else
     let len1 = String.length e1.text in
     let len2 = String.length e2.text in
-    let end1 = e1.pos + len in
+    let end1 = e1.pos + len1 in
     let diff = end1 - e2.pos in
     match (e1.op, e2.op) with
-    | (Insert, Insert) -> ({e2 with pos = e2.pos + (String.length e1.text)}, e1)
-    | (Insert, Delete) -> ({e2 with pos = e2.pos + (String.length e1.text)}, e1)
+    | (Insert, Delete) -> ([{e2 with pos = e2.pos + (String.length e1.text)}], [e1])
+    | (Insert, Insert) -> ([{e2 with pos = e2.pos + (String.length e1.text)}], [e1])
     | (Delete, Delete) ->
       if end1 <= e2.pos then
-        ({e2 with pos = e2.pos - len1}, e1)
+        ([{e2 with pos = e2.pos - len1}], [e1])
       else
-        ({e2 with pos = e2.pos - len1; text = String.sub e2.text diff (len2 - diff)},
-        {e1 with text = String.sub e1.text 0 (len1 - diff)})
+        ([{e2 with pos = e2.pos - len1; text = String.sub e2.text diff (len2 - diff)}],
+        [{e1 with text = String.sub e1.text 0 (len1 - diff)}])
     | (Delete, Insert) ->
       if end1 <= e2.pos then
-          ([{e2 with pos = e2.pos - len1}], [e1[)
+          ([{e2 with pos = e2.pos - len1}], [e1])
       else
         ([{e2 with pos = e2.pos - diff}],
         [{e1 with text = String.sub e1.text 0 (len1 - diff)}; {e1 with pos = e1.pos + len1 - diff + len2; text = String.sub e1.text (len1 - diff) diff}])
@@ -70,8 +70,10 @@ let merge p1 p2 =
     | (a::t, b) ->
       let (b', a')  = go [a] b in
       let (b'', t') = go a' t in
-      (compose b'', compose a' t')
+      (b'', compose a' t')
     | (_, _) -> flip (go p2 p1)
+  in
+  go p1 p2
 
 (* This might end up being slow. Two ways of making it faster would be to use a
  * rope instead of a string, or to require patches to be sorted by edit
@@ -107,7 +109,7 @@ let rec string_of_patch p = (* failwith "unimplemented" *)
       in
       (get_json t (to_add::j))  (*Does this result in correct order?*)
     | [] -> (* j *) `List(j) (*Creating json list from list of json elements where each element corresponds to one edit*)
-
+  in
   Yojson.Basic.to_string (get_json p [])
 
 let patch_of_string p = failwith "unimplemented"

@@ -45,6 +45,8 @@ test: compile test_patch.o test_storage.o
 	./test_storage.o inline-test-runner -log -display
 
 run: compile
+	@-mkdir -p server/log
+	@-mkdir -p server/data
 	ocsigenserver -c editor.conf
 
 clean:

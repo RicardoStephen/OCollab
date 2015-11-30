@@ -1,3 +1,5 @@
+
+
 type operation = Insert | Delete
 
 type edit = {op : operation; pos : int; text : string}
@@ -36,6 +38,33 @@ let merge p1 p2 = failwith "unimplemented"
 
 let apply_patch doc patch = failwith "unimplemented"
 
-let string_of_patch p = failwith "unimplemented"
+(* Using Yojson for this *)
+let rec string_of_patch p = (* failwith "unimplemented" *)
+  (*let f = fun acc x ->
+            let op_str = match x.op with Insert -> "Insert," | Delete -> "Delete," in
+            op_str ^ string_of_int x.pos ^ "," ^ x.text ^ ";" ^ acc in
+  List.fold_left f "" p
+*)
+  let rec get_json p j =
+    (* Convert patch to Yojson representing edits *)
+    match p with
+    | h::t ->
+      let to_add =
+        if h.op = Insert then
+          (* [Yojson.Basic.from_string "{\"op\":\"Insert\",\"pos\":0,\"text\":asdfasfasfasdf}"] *)
+          Yojson.Basic.from_string ("{\"op\":\"Insert\",\"pos\":" ^ (string_of_int h.pos) ^ ",\"text\":\"" ^ h.text ^  "\"}")
+        else
+          (* [Yojson.Basic.from_string "{\"op\":\"Delete\",\"pos\":0,\"text\":asdfasfasfasdf}"] *)
+          Yojson.Basic.from_string ("{\"op\":\"Delete\",\"pos\":" ^ (string_of_int h.pos) ^ ",\"text\":\"" ^ h.text ^  "\"}")
+      in
+      (get_json t (to_add::j))  (*Does this result in correct order?*)
+    | [] -> (* j *) `List(j) (*Creating json list from list of json elements where each element corresponds to one edit*)
+
+  Yojson.Basic.to_string (get_json p [])
 
 let patch_of_string p = failwith "unimplemented"
+
+
+
+  (* Yojson.Basic.to_string "{\"a\":1}" *)
+  (* Yojson.Bsaic.from_string *)

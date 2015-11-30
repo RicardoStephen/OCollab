@@ -58,7 +58,7 @@ let merge p1 p2 =
         ([{e2 with pos = e2.pos - diff}],
         [{e1 with text = String.sub e1.text 0 (len1 - diff)}; {e1 with pos = e1.pos + len1 - diff + len2; text = String.sub e1.text (len1 - diff) diff}])
   in
-  let rec go p1 p2 = 
+  let rec go p1 p2 =
     match (p1, p2) with
     | ([], _) -> (p2, [])
     | (_, []) -> ([], p1)
@@ -111,9 +111,20 @@ let rec string_of_patch p = (* failwith "unimplemented" *)
   in
   Yojson.Basic.to_string (get_json p [])
 
-let patch_of_string p = failwith "unimplemented"
+let patch_of_string p =
+  let json = Yojson.Basic.from_string p in
+  let lst_json = match json with
+  | `List(l) -> l
+  | _ -> failwith "Should be a list" in
 
-
-
-  (* Yojson.Basic.to_string "{\"a\":1}" *)
-  (* Yojson.Bsaic.from_string *)
+  let f = fun acc x ->
+            let record = match x with | `Assoc(v) -> v | _ -> failwith "Should be `Assoc" in
+            let operation = match snd (List.nth record 0) with `String(s) -> s | _ -> failwith "" in
+            let position = match snd (List.nth record 1) with `Int(i) -> i | _ -> failwith "" in
+            let text = match snd (List.nth record 2) with `String(s) -> s | _ -> failwith "" in
+            if operation = "Insert" then
+              {op = Insert; pos = position; text = text}::acc
+            else
+              {op = Delete; pos = position; text = text}::acc
+      in
+  List.fold_left f [] lst_json

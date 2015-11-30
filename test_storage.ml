@@ -1,11 +1,78 @@
---2015-11-29 23:04:41--  https://raw.githubusercontent.com/RicardoStephen/CS3110-Final-Project/master/test_storage.ml?token=ADbsL3T-dESvnt-Xn-Obw0g0waAoHX57ks5WZQVTwA%3D%3D
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 23.235.46.133
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|23.235.46.133|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 2512 (2.5K) [text/plain]
-Saving to: ‘test_storage.ml?token=ADbsL3T-dESvnt-Xn-Obw0g0waAoHX57ks5WZQVTwA%3D%3D’
+open Patch
+open Document
+open Storage
+open Redis
 
-     0K ..                                                    100%  938M=0s
+(* main functions to test are
+set_document_text, add_document_patches, and their corresponding getters
+*)
 
-2015-11-29 23:04:41 (938 MB/s) - ‘test_storage.ml?token=ADbsL3T-dESvnt-Xn-Obw0g0waAoHX57ks5WZQVTwA%3D%3D’ saved [2512/2512]
 
+(*
+let get_random_patch () =
+let doc_size = Random.int 2000 in
+let doc_text = get_random_text doc_size in
+
+let num_edits = Random.int 50 in
+let edits_array = Array.make num_edits [] in
+for i = 0 to num_edits do
+  let patch_op = if Random.int 1 = 0 then Insert else Delete in
+  let patch_pos = Random.int doc_size in
+  let size_patch_text = Random.int doc_size in
+  let random_text = get_random_text size_patch_text in
+  edits_array.(i) <- {op = patch_op; pos = patch_pos; text = random_text};
+done
+(* let edit_list =  *)Array.to_list edits_array (* in *)
+(* edit_list *)
+*)
+
+
+let get_doc ctl =
+  let opt = document_create ctl in
+  (* Returns document's id *)
+  match opt with Some d -> d | None -> "Failed to create doc"
+
+
+
+
+ (* first test is to test whether connection was established *)
+let ctlopt = storage_open "127.0.0.1" 6379
+TEST = match ctlopt with Some _ -> true | None -> false
+
+let ctl = match ctlopt with Some c -> c | None -> failwith "Failed to connect"
+
+
+TEST = get_document_list ctl = []
+
+let doc_id = get_doc ctl
+TEST = set_document_text ctl doc_id "Lorem ipsum"
+TEST = get_document_text ctl doc_id = "Lorem ipsum"
+(* Ensure get_document_list is updating *)
+TEST = match get_document_list ctl with | [] -> false | h::t -> t = []
+
+(* don't need to test patch operations here -- taht will be tested in test_patch.  so...
+probably won't need to use get_random_patch *)
+
+
+let doc_id2 = get_doc ctl
+TEST = set_document_text ctl doc_id2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+TEST = get_document_text ctl doc_id2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+TEST = get_document_text ctl doc_id = "Lorem ipsum"
+
+
+(* Add a patch to a document and ensure that the new document reflects that
+   that patch. *)
+let insertion = [{op  = Insert; pos = 0; text = "Insertion: "}]
+TEST = add_document_patches ctl doc_id insertion
+TEST = get_document_text ctl doc_id = "Insertion: Lorem ipsum"
+
+(* For a deletion, the length of text represents the number of characters to be deleted *)
+let deletion = [{op = Delete; pos = 0; text = "   "}]
+TEST = add_document_patches ctl doc_id deletion
+
+TEST = match get_document_patches ctl doc_id -1 with
+       | Some x -> x = [insertion; deletion] (* Correct order for insertion and deletion? *)
+       | None -> false
+
+(* Close connection *)
+storage_close ctl;

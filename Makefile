@@ -29,7 +29,7 @@ eliom_test:
 	cd eliom_test && $(MAKE) test.byte
 
 test_%.o: test_%.ml
-	$(OCN) -o $@ -linkall -c $<
+	$(OCN) -o $@ -linkpkg -package $(TEST_PKGS) -syntax camlp4o -linkall -c $<
 
 %.cmo: %.ml %.cmi
 	$(OCC) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<

@@ -17,7 +17,7 @@ TEST_PKGS=pa_ounit,pa_ounit.syntax
 
 all: run
 
-compile: editor.cmo storage.cmo document.cmo patch.cmo
+compile: patch.cmo document.cmo storage.cmo editor.cmo
 
 gui_test.js:
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o gui_test.o gui_test.ml

@@ -35,7 +35,7 @@ done
 let get_random_text n =
   let document_text = ref "" in
   let fill n =
-    let str = Char.escaped (Char.chr (Random.int 25)) in
+    let str = Char.escaped (Char.chr (Random.int 26)) in
     document_text := !document_text ^ str;
   in
   fill n;

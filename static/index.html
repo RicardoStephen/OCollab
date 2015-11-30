@@ -14,7 +14,7 @@ window.addEventListener("load", function() {
       req.onload = function(e) {
         if (this.status == 200) {
           var id = this.responseText;
-          var newloc = "/?" + id;
+          var newloc = "/?doc=" + id;
           out.innerHTML += "<a href=\"" + newloc + "\">Document created</a>";
           setTimeout(function() {
             location.href = newloc;

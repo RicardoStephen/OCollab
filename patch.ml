@@ -71,7 +71,6 @@ let merge p1 p2 =
       let (b', a')  = go [a] b in
       let (b'', t') = go a' t in
       (b'', compose a' t')
-    | (_, _) -> flip (go p2 p1)
   in
   go p1 p2
 

@@ -7,7 +7,7 @@ OCN=ocamlfind ocamlopt
 # Client side packages
 CLIENT_PKGS=
 # Server side packages
-SERVER_PKGS=yojson,redis
+SERVER_PKGS=yojson,redis,eliom.server
 # Unit test packages
 TEST_PKGS=pa_ounit,pa_ounit.syntax
 
@@ -15,9 +15,9 @@ TEST_PKGS=pa_ounit,pa_ounit.syntax
 
 .PRECIOUS: %.cmi %.cmo %.cmx %.o
 
-all: test run
+all: run
 
-compile: gui_test.js patch.o document.o storage.o
+compile: editor.cmo storage.cmo document.cmo patch.cmo
 
 gui_test.js:
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o gui_test.o gui_test.ml
@@ -31,18 +31,21 @@ eliom_test:
 test_%.o: test_%.ml
 	$(OCN) -o $@ -linkall -c $<
 
+%.cmo: %.ml %.cmi
+	$(OCC) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<
+
 %.o: %.ml %.cmi
-	$(OCN) -o $@ -linkpkg -package $(SERVER_PKGS) -c $<
+	$(OCN) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<
 
 %.cmi: %.mli
-	$(OCC) -o $@ -linkpkg -package $(SERVER_PKGS) -c $<
+	$(OCC) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<
 
 test: compile test_patch.o test_storage.o
 	./test_patch.o inline-test-runner -log -display
 	./test_storage.o inline-test-runner -log -display
 
 run: compile
-	@echo "Run"
+	ocsigenserver -c editor.conf
 
 clean:
 	@-rm -r _build

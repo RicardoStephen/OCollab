@@ -19,7 +19,7 @@ TEST = get_document_list ctl = []
 
 let doc_id = get_doc ctl
 TEST = set_document_text ctl doc_id "Lorem ipsum"
-TEST = get_document_text ctl doc_id = "Lorem ipsum"
+TEST = get_document_text ctl doc_id = Some "Lorem ipsum"
 (* Ensure get_document_list is updating *)
 TEST = match get_document_list ctl with | [] -> false | h::t -> t = []
 
@@ -39,9 +39,11 @@ TEST = get_document_text ctl doc_id = "Insertion: Lorem ipsum"
 let deletion = [{op = Delete; pos = 0; text = "   "}]
 TEST = add_document_patches ctl doc_id deletion
 
+(*
 TEST = match get_document_patches ctl doc_id -1 with
        | Some x -> x = [insertion; deletion] (* Correct order for insertion and deletion? *)
        | None -> false
+*)
 
 (* Close connection *)
 storage_close ctl;

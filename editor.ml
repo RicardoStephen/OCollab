@@ -38,11 +38,17 @@ let create_service =
     create_document
 
 let create_session getp postp =
-  postp
   let sid = String.init 16 (fun x -> Char.chr ((Random.int 26) + 65)) in
   Lwt.return sid
 
+let session_service_fallback =
+  Eliom_registration.Html_text.register_service
+    ~path:["session"]
+    ~get_params:Eliom_parameter.any
+    (fun _ _ -> Lwt.return "ERROR")
+
 let session_service =
   Eliom_registration.Html_text.register_post_service
-    ~path:["session"]
+    ~fallback:session_service_fallback
     ~post_params:Eliom_parameter.any
+

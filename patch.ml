@@ -32,34 +32,43 @@ let inverse p =
   in
   helper p
 
+let slice s a b =
+  let a = max a 0 in
+  let b = min (String.length s) b in
+  if b <= a then "" else String.sub s a (b - a)
+
 let merge p1 p2 =
   let flip (a, b) = (b, a) in
   let rec merge_edit e1 e2 =
-    if e1.pos > e2.pos then flip (merge_edit e2 e1) else
     let len1 = String.length e1.text in
     let len2 = String.length e2.text in
     let end1 = e1.pos + len1 in
+    let end2 = e2.pos + len2 in
     let diff = end1 - e2.pos in
+    if e1.pos > e2.pos || (e1.pos == e2.pos && end1 > end2) then flip (merge_edit e2 e1)
+    else
     match (e1.op, e2.op) with
     | (Insert, Delete) -> ([{e2 with pos = e2.pos + (String.length e1.text)}], [e1])
     | (Insert, Insert) -> ([{e2 with pos = e2.pos + (String.length e1.text)}], [e1])
     | (Delete, Delete) ->
+      let a = min end1 end2 in
+      let b = max e1.pos e2.pos in
+      if b > a then
+        ([{e2 with pos = e2.pos - len1}], [e1])
+      else
+        ([{e2 with pos = e1.pos; text = slice e2.text (a - e2.pos) len2}],
+        [{e1 with text = slice e1.text 0 (b - e1.pos)}; {e1 with text = slice e1.text (a - e1.pos) len1}])
+    | (Delete, Insert) ->
       if end1 <= e2.pos then
         ([{e2 with pos = e2.pos - len1}], [e1])
       else
-        ([{e2 with pos = e2.pos - len1; text = String.sub e2.text diff (len2 - diff)}],
-        [{e1 with text = String.sub e1.text 0 (len1 - diff)}])
-    | (Delete, Insert) ->
-      if end1 <= e2.pos then
-          ([{e2 with pos = e2.pos - len1}], [e1])
-      else
-        ([{e2 with pos = e2.pos - diff}],
-        [{e1 with text = String.sub e1.text 0 (len1 - diff)}; {e1 with pos = e1.pos + len1 - diff + len2; text = String.sub e1.text (len1 - diff) diff}])
+        ([{e2 with pos = e1.pos}],
+        [{e1 with text = slice e1.text 0 (e2.pos - e1.pos)}; {e1 with pos = e1.pos + len2; text = slice e1.text (e2.pos - e1.pos) len1}])
   in
   let rec go p1 p2 =
     match (p1, p2) with
-    | ([], _) -> (p2, [])
-    | (_, []) -> ([], p1)
+    | ([], _) -> (p2, p1)
+    | (_, []) -> (p2, p1)
     | (a::[], b::[]) -> merge_edit a b
     | (a::[], b::t) ->
       let (b', a')  = merge_edit a b in

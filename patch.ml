@@ -39,6 +39,7 @@ let slice s a b =
 
 let merge p1 p2 =
   let flip (a, b) = (b, a) in
+  let nonempty edit = if String.length edit.text = 0 then [] else [edit] in
   let rec merge_edit e1 e2 =
     let len1 = String.length e1.text in
     let len2 = String.length e2.text in
@@ -56,14 +57,18 @@ let merge p1 p2 =
       if b > a then
         ([{e2 with pos = e2.pos - len1}], [e1])
       else
-        ([{e2 with pos = e1.pos; text = slice e2.text (a - e2.pos) len2}],
-        [{e1 with text = slice e1.text 0 (b - e1.pos)}; {e1 with text = slice e1.text (a - e1.pos) len1}])
+        (nonempty {e2 with pos = e1.pos; text = slice e2.text (a - e2.pos) len2},
+        compose
+          (nonempty {e1 with text = slice e1.text 0 (b - e1.pos)})
+          (nonempty {e1 with text = slice e1.text (a - e1.pos) len1}))
     | (Delete, Insert) ->
       if end1 <= e2.pos then
         ([{e2 with pos = e2.pos - len1}], [e1])
       else
         ([{e2 with pos = e1.pos}],
-        [{e1 with text = slice e1.text 0 (e2.pos - e1.pos)}; {e1 with pos = e1.pos + len2; text = slice e1.text (e2.pos - e1.pos) len1}])
+        compose
+          (nonempty {e1 with text = slice e1.text 0 (e2.pos - e1.pos)})
+          (nonempty {e1 with pos = e1.pos + len2; text = slice e1.text (e2.pos - e1.pos) len1}))
   in
   let rec go p1 p2 =
     match (p1, p2) with
@@ -76,7 +81,7 @@ let merge p1 p2 =
       (compose b' t', a'')
     | (a::t, b) ->
       let (b', a')  = go [a] b in
-      let (b'', t') = go a' t in
+      let (b'', t') = go t b' in
       (b'', compose a' t')
   in
   go p1 p2

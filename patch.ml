@@ -86,7 +86,7 @@ let apply_patch doc p =
   List.fold_left apply_edit doc p
 
 (* Using Yojson for this *)
-let rec string_of_patch p = (* failwith "unimplemented" *)
+let rec string_of_patch p =
   (*let f = fun acc x ->
             let op_str = match x.op with Insert -> "Insert," | Delete -> "Delete," in
             op_str ^ string_of_int x.pos ^ "," ^ x.text ^ ";" ^ acc in
@@ -116,13 +116,13 @@ let patch_of_string p =
   | _ -> failwith "Should be a list" in
 
   let f = fun acc x ->
-            let record = match x with | `Assoc(v) -> v | _ -> failwith "Should be `Assoc" in
-            let operation = match snd (List.nth record 0) with `String(s) -> s | _ -> failwith "" in
-            let position = match snd (List.nth record 1) with `Int(i) -> i | _ -> failwith "" in
-            let text = match snd (List.nth record 2) with `String(s) -> s | _ -> failwith "" in
-            if operation = "Insert" then
-              {op = Insert; pos = position; text = text}::acc
-            else
-              {op = Delete; pos = position; text = text}::acc
+    let record = match x with | `Assoc(v) -> v | _ -> failwith "Should be `Assoc" in
+    let operation = match snd (List.nth record 0) with `String(s) -> s | _ -> failwith "" in
+    let position = match snd (List.nth record 1) with `Int(i) -> i | _ -> failwith "" in
+    let text = match snd (List.nth record 2) with `String(s) -> s | _ -> failwith "" in
+    if operation = "Insert" then
+      {op = Insert; pos = position; text = text}::acc
+    else
+      {op = Delete; pos = position; text = text}::acc
       in
   List.fold_left f [] lst_json

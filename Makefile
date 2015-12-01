@@ -21,6 +21,10 @@ all: run
 
 compile: patch.cmo document.cmo storage.cmo editor.cmo
 
+create_doc.js:
+	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/create_doc.o static/create_doc.ml
+	js_of_ocaml static/create_doc.o
+
 gui_test.js:
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o gui_test.o gui_test.ml
 	js_of_ocaml gui_test.o

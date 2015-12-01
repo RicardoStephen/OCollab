@@ -3,7 +3,7 @@ open Assertions
 
 let rec repeat n f =
   if n = 0 then () else
-  let _ = f () in repeat (n - 1) f
+  let _ = f n in repeat (n - 1) f
 
 let random_text n =
   let random_char () = Char.escaped (Char.chr (65 + (Random.int 26))) in
@@ -19,13 +19,13 @@ let random_edit doc_size =
   let patch_op =
     if ((rand0 2) = 0) || (doc_size = 0) then Insert else Delete in
   let patch_pos = rand0 doc_size in
-  let max_size = if patch_op = Insert then 20 else doc_size - patch_pos in
+  let max_size = if patch_op = Insert then 10 else doc_size - patch_pos in
   let size_patch_text = rand0 max_size in
   let random_text = random_text size_patch_text in
   {op = patch_op; pos = patch_pos; text = random_text}
 
 let random_patch doc_size =
-  let num_edits = Random.int 50 in
+  let num_edits = Random.int 2 in
   let offset edit =
     let sign = if edit.op = Insert then 1 else -1 in
     sign * (String.length edit.text)
@@ -81,10 +81,30 @@ TEST_UNIT =
   repeat 1000 (fun _ ->
   let (edit_list, s1) = random_patch 0 in
   let edit_list2 = fst (random_patch s1) in
-  let doc1 = apply_patch empty_doc (compose edit_list edit_list2) in
-  let doc2 = apply_patch (apply_patch empty_doc edit_list) edit_list2 in
   apply_patch empty_doc (compose edit_list edit_list2) ===
     apply_patch (apply_patch empty_doc edit_list) edit_list2
+  )
+
+TEST_UNIT =
+  repeat 10000000 (fun i ->
+    let doc_size = Random.int 20 in
+    let doc_text = random_text doc_size in
+    let p1 = fst (random_patch doc_size) in
+    let p2 = fst (random_patch doc_size) in
+    (*let _ =  Printf.printf "%s\n%s\n%s\n\n" doc_text (string_of_patch p1) (string_of_patch p2) in*)
+    let (p2', p1') = merge p1 p2 in
+    let doc1 = apply_patch (apply_patch doc_text p1) p2' in
+    let doc2 = apply_patch (apply_patch doc_text p2) p1' in
+    doc1 === doc2
+  )
+
+(* string_of_patch and patch_of_string are inverses *)
+TEST_UNIT =
+  repeat 1000 (fun _ ->
+    let edit_list = fst (random_patch 0) in
+    let s = string_of_patch edit_list in
+    patch_of_string s === edit_list;
+    string_of_patch (patch_of_string s) === s
   )
 
 let _ = Pa_ounit_lib.Runtime.summarize ()

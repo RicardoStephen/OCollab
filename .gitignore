@@ -1,5 +1,6 @@
 _cs3110
 _build
+server
 
 *.swp
 *.byte

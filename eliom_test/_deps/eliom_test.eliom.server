@@ -1,4 +1,0 @@
-_server/eliom_test.cmo :
-_server/eliom_test.cmx :
-_server/eliom_test.cmo : _server/eliom_test.type_mli
-_server/eliom_test.cmx : _server/eliom_test.type_mli

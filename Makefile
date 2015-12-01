@@ -13,22 +13,19 @@ TEST_PKGS=pa_ounit,yojson,redis
 
 TEST_LIBS=storage.cmx document.cmx serializer.cmx assertions.cmx
 
-.PHONY: all eliom_test
+.PHONY: all
 
 .PRECIOUS: %.cmi %.cmo %.cmx %.o
 
 all: run
 
-compile: patch.cmo document.cmo storage.cmo editor.cmo
+compile: server client.js
 
-gui_test.js:
-	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o gui_test.o gui_test.ml
-	js_of_ocaml gui_test.o
+server: patch.cmo document.cmo storage.cmo editor.cmo
 
-eliom_test: 
-	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o eliom_test/static/gui_js.byte eliom_test/gui_js.ml
-	js_of_ocaml eliom_test/static/gui_js.byte
-	cd eliom_test && $(MAKE) test.byte
+client.js:
+	cp patch.mli patch.ml document.mli document.ml client
+	cd client && $(MAKE) && cd ..
 
 test_%: test_%.ml patch.cmx $(TEST_LIBS)
 	$(OCN) -o $@ -linkall -thread -linkpkg -package $(TEST_PKGS) -syntax camlp4o patch.cmx -package pa_ounit.syntax $(TEST_LIBS) $< 
@@ -49,6 +46,10 @@ test: compile test_patch test_storage
 run: compile
 	@-mkdir -p server/log
 	@-mkdir -p server/data
+	@-mkdir -p server/static
+	cp client/_build/client.js server/static/
+	cp client/index.html server/static/
+	cp -r client/codemirror server/static/
 	ocsigenserver -c editor.conf
 
 clean:
@@ -57,9 +58,11 @@ clean:
 	@-rm *.cmi
 	@-rm *.cmo
 	@-rm *.cmx
+	@-rm *.cma
 	@-rm *.o
-	@-rm test_patch
-	@-rm test_storage
+	@-rm *.js
+	@-rm -r static
+	cd client && $(MAKE) clean && cd ..
 
 install:
 	opam install -y yojson

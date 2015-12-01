@@ -11,8 +11,6 @@ let ctl =
   | Some x -> x
   | None -> failwith "Failed to connect to Redis"
 
-let clients = Hashtbl.create 20
-
 type session_id = string
 
 type client_info = {
@@ -26,6 +24,8 @@ type client_info = {
   patch_queue : patch list
 }
 
+let clients = Hashtbl.create 20
+
 let create_document getp postp =
   match document_create ctl with
   | Some newid -> Lwt.return newid
@@ -37,9 +37,25 @@ let create_service =
     ~get_params:Eliom_parameter.any
     create_document
 
-let create_session getp postp =
-  let sid = String.init 16 (fun x -> Char.chr ((Random.int 26) + 65)) in
-  Lwt.return sid
+let create_session getp (docid) =
+  let rec try_create count =
+    if count = 0 then
+      Lwt.return "ERROR"
+    else
+      let sid = String.init 16 (fun x -> Char.chr ((Random.int 26) + 65)) in
+      if Hashtbl.mem clients sid then
+        try_create (count - 1)
+      else
+        let ci = {
+          sid = sid;
+          docid = docid;
+          patch_index = 0;
+          patch_queue = []
+        } in
+        Hashtbl.add clients sid ci;
+        Lwt.return sid
+  in
+  try_create 100
 
 let session_service_fallback =
   Eliom_registration.Html_text.register_service
@@ -50,5 +66,5 @@ let session_service_fallback =
 let session_service =
   Eliom_registration.Html_text.register_post_service
     ~fallback:session_service_fallback
-    ~post_params:Eliom_parameter.any
-
+    ~post_params:(string "docid")
+    create_session

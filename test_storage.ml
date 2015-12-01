@@ -47,3 +47,5 @@ TEST = match get_document_patches ctl doc_id -1 with
 
 (* Close connection *)
 let _ = storage_close ctl
+
+let _ = Pa_ounit_lib.Runtime.summarize ()

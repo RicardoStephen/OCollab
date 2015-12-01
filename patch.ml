@@ -1,5 +1,3 @@
-
-
 type operation = Insert | Delete
 
 type edit = {op : operation; pos : int; text : string}

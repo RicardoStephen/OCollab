@@ -24,6 +24,14 @@ let storage_close ctl =
   let conn = ctl.conn in
   quit conn
 
+let storage_flush ctl b =
+  let open Redis_sync.Client in
+  let conn = ctl.conn in
+  if b then
+    flushdb conn
+  else
+    ()
+
 let document_create ctl =
   let open Redis_sync.Client in
   let conn = ctl.conn in
@@ -121,7 +129,6 @@ let set_document_patches ctl id patches =
   else
     false
 
-(* Removed
 let set_document_text ctl id text =
   let open Redis_sync.Client in
   let conn = ctl.conn in
@@ -130,7 +137,6 @@ let set_document_text ctl id text =
     (set conn key text; true)
   else
     false
-*)
 
 let set_document ctl id doc =
   let open Redis_sync.Client in

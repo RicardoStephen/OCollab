@@ -8,3 +8,5 @@ _build
 *.cmi
 *.o
 gui_test.js
+test_patch
+test_storage

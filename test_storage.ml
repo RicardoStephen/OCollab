@@ -15,6 +15,8 @@ TEST = match ctlopt with Some _ -> true | None -> false
 
 let ctl = match ctlopt with Some c -> c | None -> failwith "Failed to connect"
 
+(* Empty the database first *)
+TEST_UNIT = storage_flush ctl true
 
 TEST_UNIT = print_string ((string_of_int (List.length (get_document_list ctl))) ^ "\n\n\n");
 get_document_list ctl === []

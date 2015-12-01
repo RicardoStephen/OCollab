@@ -22,16 +22,14 @@ type controller = {
 val storage_open : string -> int -> controller option
 
 (*
- * Initialize the Redis connection at a given inet address and port. The
- * controller returned is used for any subsequent operation on this
- * connection. Returns None if no connection could be made
- *)
-val storage_open : string -> int -> controller option
-
-(*
  * Close the Redis connection.
  *)
 val storage_close : controller -> unit
+
+(*
+ * Flush the storage database.
+ *)
+val storage_flush : controller -> bool -> unit
 
 (*
  * Creates a document and returns its id, or None if creation failed.

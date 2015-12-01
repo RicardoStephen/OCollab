@@ -1,7 +1,7 @@
 open Patch
 
 let get_random_text n =
-  let random_char () = Char.escaped (Char.chr (Random.int 26)) in
+  let random_char () = Char.escaped (Char.chr (65 + (Random.int 26))) in
   let rec go s n = 
     if n = 0 then s
     else go (s ^ (random_char ())) (n - 1)
@@ -11,11 +11,11 @@ let get_random_text n =
 let get_random_edit_list doc_size =
   let num_edits = Random.int 50 in
   let random_edit doc_size =
-    let patch_op = if Random.int 1 = 0 then Insert else Delete in
+    let patch_op = if ((Random.int 2) = 0) || (doc_size = 0) then Insert else Delete in
     let patch_pos = Random.int (doc_size + 1) in
     let size_patch_text = Random.int (doc_size + 1) in
     let random_text = get_random_text size_patch_text in
-    {op = patch_op; pos = patch_pos; text = random_text};
+    {op = patch_op; pos = patch_pos; text = random_text}
   in
   let offset edit =
     let sign = if edit.op = Insert then 1 else -1 in
@@ -45,13 +45,13 @@ TEST =
     apply_patch doc_text empty_patch
 
 (* Applying patch composed with its inverse to non-empty document results in the original document text *)
-TEST =
+(*TEST =
   let doc_size = Random.int 2000 in
   let edit_list = fst (get_random_edit_list doc_size) in
-  (*let doc_text = get_random_text doc_size in*)
-  true
-  (*apply_patch doc_text (compose edit_list inv) =
-    apply_patch doc_text empty_patch *)
+  let doc_text = get_random_text doc_size in
+  apply_patch doc_text (compose edit_list (inverse edit_list)) =
+    apply_patch doc_text empty_patch
+*)
 
 (* Applying patch composed with another patch to an empty document is the same as applying the second patch
 to the empty document and then applying the first patch. *)

@@ -44,7 +44,7 @@ test_%: test_%.ml patch.cmx $(TEST_LIBS)
 
 test: compile test_patch test_storage
 	./test_patch inline-test-runner dummy -log -verbose
-	./test_storage inline-test-runner dummy -log
+	./test_storage inline-test-runner dummy -log -verbose
 
 run: compile
 	@-mkdir -p server/log

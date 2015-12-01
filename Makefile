@@ -9,7 +9,7 @@ CLIENT_PKGS=
 # Server side packages
 SERVER_PKGS=yojson,redis,eliom.server
 # Unit test packages
-TEST_PKGS=pa_ounit,pa_ounit.syntax
+TEST_PKGS=pa_ounit,yojson,redis
 
 .PHONY: all eliom_test
 
@@ -28,21 +28,21 @@ eliom_test:
 	js_of_ocaml eliom_test/static/gui_js.byte
 	cd eliom_test && $(MAKE) test.byte
 
-test_%.o: test_%.ml
-	$(OCN) -o $@ -linkall -thread -linkpkg -package $(TEST_PKGS) -package $(SERVER_PKGS) -syntax camlp4o -linkall -c $<
+test_%: test_%.ml patch.cmx storage.cmx document.cmx
+	$(OCN) -o $@ -linkall -thread -linkpkg -package $(TEST_PKGS) -syntax camlp4o patch.cmx -package pa_ounit.syntax storage.cmx document.cmx $< 
 
 %.cmo: %.ml %.cmi
 	$(OCC) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<
 
-%.o: %.ml %.cmi
+%.cmx: %.ml %.cmi
 	$(OCN) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<
 
 %.cmi: %.mli
 	$(OCC) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<
 
-test: compile test_patch.o test_storage.o
-	./test_patch.o inline-test-runner -log -display
-	./test_storage.o inline-test-runner -log -display
+test: compile test_patch test_storage
+	./test_patch inline-test-runner dummy -log -verbose
+	./test_storage inline-test-runner dummy -log -verbose
 
 run: compile
 	@-mkdir -p server/log

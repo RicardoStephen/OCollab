@@ -81,8 +81,9 @@ val set_document_patches : controller -> document_id -> patch list -> bool
 
 (*
  * Sets the full text of a document.
+ * Removed: documents are synced with patches.
  *)
-val set_document_text : controller -> document_id -> document_text -> bool
+(*val set_document_text : controller -> document_id -> document_text -> bool*)
 
 (*
  * Sets the contents of a document.

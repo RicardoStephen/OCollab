@@ -2,6 +2,7 @@ open Patch
 open Document
 open Storage
 open Redis
+open Assertions
 
 let get_doc ctl =
   let opt = document_create ctl in
@@ -15,25 +16,25 @@ TEST = match ctlopt with Some _ -> true | None -> false
 let ctl = match ctlopt with Some c -> c | None -> failwith "Failed to connect"
 
 
-TEST = get_document_list ctl = []
+TEST_UNIT = get_document_list ctl === []
 
 let doc_id = get_doc ctl
 TEST = set_document_text ctl doc_id "Lorem ipsum"
-TEST = get_document_text ctl doc_id = Some "Lorem ipsum"
+TEST_UNIT = get_document_text ctl doc_id === Some "Lorem ipsum"
 (* Ensure get_document_list is updating *)
 TEST = match get_document_list ctl with | [] -> false | h::t -> t = []
 
 let doc_id2 = get_doc ctl
 TEST = set_document_text ctl doc_id2 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-TEST = get_document_text ctl doc_id2 = Some "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-TEST = get_document_text ctl doc_id = Some "Lorem ipsum"
+TEST_UNIT = get_document_text ctl doc_id2 === Some "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+TEST_UNIT = get_document_text ctl doc_id === Some "Lorem ipsum"
 
 
 (* Add a patch to a document and ensure that the new document reflects that
    that patch. *)
 let insertion = [{op  = Insert; pos = 0; text = "Insertion: "}]
 TEST = add_document_patches ctl doc_id [insertion]
-TEST = get_document_text ctl doc_id = Some "Insertion: Lorem ipsum"
+TEST_UNIT = get_document_text ctl doc_id === Some "Insertion: Lorem ipsum"
 
 (* For a deletion, the length of text represents the number of characters to be deleted *)
 let deletion = [{op = Delete; pos = 0; text = "   "}]

@@ -11,6 +11,8 @@ SERVER_PKGS=yojson,redis,eliom.server
 # Unit test packages
 TEST_PKGS=pa_ounit,yojson,redis
 
+TEST_LIBS=storage.cmx document.cmx serializer.cmx assertions.cmx
+
 .PHONY: all eliom_test
 
 .PRECIOUS: %.cmi %.cmo %.cmx %.o
@@ -28,8 +30,8 @@ eliom_test:
 	js_of_ocaml eliom_test/static/gui_js.byte
 	cd eliom_test && $(MAKE) test.byte
 
-test_%: test_%.ml patch.cmx storage.cmx document.cmx
-	$(OCN) -o $@ -linkall -thread -linkpkg -package $(TEST_PKGS) -syntax camlp4o patch.cmx -package pa_ounit.syntax storage.cmx document.cmx $< 
+test_%: test_%.ml patch.cmx $(TEST_LIBS)
+	$(OCN) -o $@ -linkall -thread -linkpkg -package $(TEST_PKGS) -syntax camlp4o patch.cmx -package pa_ounit.syntax $(TEST_LIBS) $< 
 
 %.cmo: %.ml %.cmi
 	$(OCC) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<
@@ -42,7 +44,7 @@ test_%: test_%.ml patch.cmx storage.cmx document.cmx
 
 test: compile test_patch test_storage
 	./test_patch inline-test-runner dummy -log -verbose
-	./test_storage inline-test-runner dummy -log -verbose
+	./test_storage inline-test-runner dummy -log
 
 run: compile
 	@-mkdir -p server/log
@@ -56,6 +58,8 @@ clean:
 	@-rm *.cmo
 	@-rm *.cmx
 	@-rm *.o
+	@-rm test_patch
+	@-rm test_storage
 
 install:
 	opam install -y yojson

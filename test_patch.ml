@@ -1,4 +1,5 @@
 open Patch
+open Assertions
 
 let get_random_text n =
   let random_char () = Char.escaped (Char.chr (65 + (Random.int 26))) in
@@ -31,25 +32,25 @@ let get_random_edit_list doc_size =
 
 
 (* Empty patch does not change the document's text *)
-TEST =
+TEST_UNIT =
   let doc_size = Random.int 2000 in
   let doc_text = get_random_text doc_size in
   let edit_list = [] in
-  apply_patch doc_text edit_list = doc_text
+  apply_patch doc_text edit_list === doc_text
 
 (* Applying patch composed with its inverse to empty document results in the empty document. *)
-TEST =
+TEST_UNIT =
   let edit_list = fst (get_random_edit_list 0) in
   let doc_text = empty_doc in (* will just be "" *)
-  apply_patch doc_text (compose edit_list (inverse edit_list)) =
+  apply_patch doc_text (compose edit_list (inverse edit_list)) ===
     apply_patch doc_text empty_patch
 
 (* Applying patch composed with its inverse to non-empty document results in the original document text *)
-(*TEST =
+(*TEST_UNIT =
   let doc_size = Random.int 2000 in
   let edit_list = fst (get_random_edit_list doc_size) in
   let doc_text = get_random_text doc_size in
-  apply_patch doc_text (compose edit_list (inverse edit_list)) =
+  apply_patch doc_text (compose edit_list (inverse edit_list)) ===
     apply_patch doc_text empty_patch
 *)
 
@@ -57,10 +58,10 @@ TEST =
 to the empty document and then applying the first patch. *)
 (* TODO: is the order here correct? or should it be first patch, then second patch? *)
 (* TODO: haven't made sure that edit_list will have edits that are within the limits of the document text *)
-TEST =
+TEST_UNIT =
   let (edit_list, s1) = get_random_edit_list 0 in
   let edit_list2 = fst (get_random_edit_list s1) in
-  apply_patch empty_doc (compose edit_list edit_list2) =
+  apply_patch empty_doc (compose edit_list edit_list2) ===
     apply_patch (apply_patch empty_doc edit_list2) edit_list
 
 let _ = Pa_ounit_lib.Runtime.summarize ()

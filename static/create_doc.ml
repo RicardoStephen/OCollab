@@ -17,20 +17,27 @@ let create_form _ =
        let value = textinput##value in
        let req = XmlHttpRequest.create () in
        let f () = 
-         match (req##readyState, req##status) with           
-(*         | (XmlHttpRequest.DONE, 200) ->            *)
-         | _ ->
-            if(req##readyState <> XmlHttpRequest.DONE) then failwith "I was not ready" else
-            let link = Html.createLink d in
-            link##href <- (Js.string ("/doc?id="))##concat(req##responseText);
-            link##charset <- (Js.string "Click here to access your document");
-            Dom.appendChild body link;
-            () in
-(*         | (XmlHttpRequest.DONE, b) ->
-            failwith ("Ricardo, "^(string_of_int b)^"status was returned")
-         | (_, 200) ->
-            failwith ("Ricardo, 200 status was returned, but there was another problem")
-         | _ -> failwith "Ricardo, response problem" in *)
+         match (req##readyState, req##status) with
+         | (XmlHttpRequest.DONE, 200) ->
+            let anchor = Html.createA d in
+            anchor##href <- (Js.string ("/doc?id="))##concat(req##responseText);
+            anchor##innerHTML <- (Js.string "Click here to access your document");
+            Dom.appendChild body anchor; 
+         | _ -> () in
+(*          match (req##readyState, req##status) with            *)
+(* (\*         | (XmlHttpRequest.DONE, 200) ->            *\) *)
+(*          | _ -> *)
+(*             if(req##readyState <> XmlHttpRequest.DONE) then failwith "I was not ready" else  *)
+(*             let link = Html.createLink d in *)
+(*             link##href <- (Js.string ("/doc?id="))##concat(req##responseText); *)
+(*             link##charset <- (Js.string "Click here to access your document"); *)
+(*             Dom.appendChild body link; *)
+(*             () in *)
+(* (\*         | (XmlHttpRequest.DONE, b) -> *)
+(*             failwith ("Ricardo, "^(string_of_int b)^"status was returned") *)
+(*          | (_, 200) -> *)
+(*             failwith ("Ricardo, 200 status was returned, but there was another problem") *)
+(*          | _ -> failwith "Ricardo, response problem" in *\) *)
        let callback = Js.wrap_callback f in
        req##onreadystatechange <- callback;
        req##_open(Js.string "GET", 
@@ -41,6 +48,7 @@ let create_form _ =
     );
   Dom.appendChild body textinput;
   Dom.appendChild body submitbutton;
+(*   Dom.appendChild body div; *)
   Js._false
 
 let _ = Html.window##onload <- Html.handler create_form

@@ -101,9 +101,13 @@ let add_document_patches ctl id patches =
   let open Redis_sync.Client in
   let conn = ctl.conn in
   if exists conn ("document:" ^ id) then
-    let key = "document:" ^ id ^ ":patches" in
+    (let key = "document:" ^ id ^ ":text" in
+    let currtext = match get conn key with Some x -> x | None -> "" in
+    let newtext = List.fold_left apply_patch currtext patches in
+    set conn key newtext; true) &&
+    (let key = "document:" ^ id ^ ":patches" in
     List.fold_left (fun r p ->
-      r && (rpush conn key (string_of_patch p)) > 0) true patches
+      r && (rpush conn key (string_of_patch p)) > 0) true patches)
   else
     false
 
@@ -117,6 +121,7 @@ let set_document_patches ctl id patches =
   else
     false
 
+(* Removed
 let set_document_text ctl id text =
   let open Redis_sync.Client in
   let conn = ctl.conn in
@@ -125,6 +130,7 @@ let set_document_text ctl id text =
     (set conn key text; true)
   else
     false
+*)
 
 let set_document ctl id doc =
   let open Redis_sync.Client in
@@ -133,7 +139,6 @@ let set_document ctl id doc =
     let key = "document:" ^ doc.id in
     set conn key doc.id;
     (set_document_metadata ctl doc.id doc.metadata) &&
-    (set_document_patches ctl doc.id doc.patches) &&
-    (set_document_text ctl doc.id doc.text)
+    (set_document_patches ctl doc.id doc.patches)
   else
     false

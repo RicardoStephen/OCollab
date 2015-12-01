@@ -1,42 +1,64 @@
 <html>
 <head>
-  <title>Collaborative Text Editor</title>
-  <script type="text/javascript">
+    <title>Collaborative Text Editor</title>
+    <script type="text/javascript" src="codemirror-5.8/lib/codemirror.js"></script>
+    <link type="stylesheet" href="codemirror-5.8/lib/codemirror.css" />
+    <script type="text/javascript">
+
+function req(type, path, params, success, error) {
+    var xhr = new XMLHttpRequest();
+    xhr.open(type, path, true);
+    xhr.onload = function(e) {
+        if (this.status == 200) {
+            success.call(this, e);
+        }
+    };
+    xhr.onerror = function(e) {
+        error.call(this, e);
+    };
+    xhr.send(params);
+}
 
 window.addEventListener("load", function() {
-  if (location.search.length < 2) { // Home page
-    var b = document.createElement("button");
-    b.innerHTML = "Create a document";
-    var out = document.createElement("div");
-    b.addEventListener("click", function() {
-      var req = new XMLHttpRequest();
-      req.open("GET", "/create", true);
-      req.onload = function(e) {
-        if (this.status == 200) {
-          var id = this.responseText;
-          var newloc = "doc?id=" + id;
-          out.innerHTML += "<a href=\"" + newloc + "\">Document created</a>";
-          setTimeout(function() {
-            location.href = newloc;
-          }, 2000);
-        }
-      };
-      req.onerror = function(e) {
-        out.innerHTML += "<div style=\"color:red\">Failed to create a document.</div>";
-      };
-      req.send();
-    });
-    document.body.appendChild(b);
-    document.body.appendChild(document.createElement("br"));
-    document.body.appendChild(out);
-  }
-  else {
-    var id = location.search.substring(1);
-    console.log(id);
-  }
+    if (location.search.length < 2) { // Home page
+        var b = document.createElement("button");
+        b.innerHTML = "Create a document";
+        var out = document.createElement("div");
+        b.addEventListener("click", function() {
+            req("GET", "/create",
+                function(e) {
+                    var id = this.responseText;
+                    var newloc = "doc?id=" + id;
+                    out.innerHTML += "<a href=\"" + newloc + "\">Document created</a>";
+                    setTimeout(function() {
+                        location.href = newloc;
+                    }, 2000);
+                },
+                function(e) {
+                    out.innerHTML += "<div style=\"color:red\">Failed to create a document.</div>";
+                }
+            );
+        });
+        document.body.appendChild(b);
+        document.body.appendChild(document.createElement("br"));
+        document.body.appendChild(out);
+    }
+    else {
+        // Get document id
+        var id = location.search.substring(1);
+        // Get session id
+        req("POST", "/session", "id=" + id,
+            function(e) {
+                var sid = e.responseText;
+            },
+            function(e) {
+                
+            }
+        );
+    }
 });
 
-  </script>
+    </script>
 </head>
 <body>
 </body>

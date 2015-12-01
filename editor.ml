@@ -31,6 +31,9 @@ let create_document getp postp =
   | Some newid -> Lwt.return newid
   | None -> Lwt.return ""
 
+let error_handler _ _ =
+  Lwt.return "ERROR"
+
 let create_service =
   Eliom_registration.Html_text.register_service
     ~path:["create"]
@@ -40,7 +43,7 @@ let create_service =
 let create_session getp (docid) =
   let rec try_create count =
     if count = 0 then
-      Lwt.return "ERROR"
+      error_handler () ()
     else
       let sid = String.init 16 (fun x -> Char.chr ((Random.int 26) + 65)) in
       if Hashtbl.mem clients sid then
@@ -61,10 +64,17 @@ let session_service_fallback =
   Eliom_registration.Html_text.register_service
     ~path:["session"]
     ~get_params:Eliom_parameter.any
-    (fun _ _ -> Lwt.return "ERROR")
+    error_handler
 
 let session_service =
   Eliom_registration.Html_text.register_post_service
     ~fallback:session_service_fallback
     ~post_params:(string "docid")
     create_session
+
+let doc_service_fallback =
+  Eliom_registration.Html_text.register_service
+    ~path:["document_text"]
+    ~get_params:Eliom_parameter.any
+    error_handler
+    

@@ -1,63 +1,102 @@
 <html>
 <head>
     <title>Collaborative Text Editor</title>
-    <script type="text/javascript" src="codemirror/lib/codemirror.js"></script>
-    <link type="stylesheet" href="codemirror/lib/codemirror.css" />
+    <script type="text/javascript" src="ace-min/ace.js"></script>
     <script type="text/javascript">
 
 function req(type, path, params, success, error) {
     var xhr = new XMLHttpRequest();
     xhr.open(type, path, true);
     xhr.onload = function(e) {
-        if (this.status == 200) {
-            success.call(this, e);
+        switch (this.status) {
+            case 200:
+                success.call(this, e);
+                break;
+            case 404:
+            case 500:
+                error.call(this, e);
+                break;
+            default:
+                break;
         }
     };
     xhr.onerror = function(e) {
         error.call(this, e);
     };
+    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
     xhr.send(params);
 }
 
 window.addEventListener("load", function() {
     if (location.search.length < 2) { // Home page
-        var b = document.createElement("button");
-        b.innerHTML = "Create a document";
-        var out = document.createElement("div");
-        b.addEventListener("click", function() {
-            req("GET", "/create", "",
-                function(e) {
-                    var id = this.responseText;
-                    var newloc = "?" + id;
-                    out.innerHTML += "<a href=\"" + newloc + "\">Document created</a>";
-                    setTimeout(function() {
-                        location.href = newloc;
-                    }, 2000);
-                },
-                function(e) {
-                    out.innerHTML += "<div style=\"color:red\">Failed to create a document.</div>";
-                }
-            );
-        });
-        document.body.appendChild(b);
-        document.body.appendChild(document.createElement("br"));
-        document.body.appendChild(out);
+        createHome();
     }
     else {
-        // Get document id
-        var id = location.search.substring(1);
-        // Get session id
-        req("POST", "/session", "docid=" + id,
-            function(e) {
-                var sid = e.responseText;
-                console.log(sid);
-            },
-            function(e) {
-                
-            }
-        );
+        createEditor();
     }
 });
+
+function createHome() {
+    var b = document.createElement("button");
+    b.innerHTML = "Create a document";
+    var out = document.createElement("div");
+    b.addEventListener("click", function() {
+        req("GET", "/create", "",
+            function(e) {
+                var id = this.responseText;
+                var newloc = "?" + id;
+                out.innerHTML += "<a href=\"" + newloc + "\">Document created</a>";
+                setTimeout(function() {
+                    location.href = newloc;
+                }, 2000);
+            },
+            function(e) {
+                out.innerHTML += "<div style=\"color:red\">Failed to create a document.</div>";
+            }
+        );
+    });
+    document.body.appendChild(b);
+    document.body.appendChild(document.createElement("br"));
+    document.body.appendChild(out);
+}
+
+function createEditor() {
+    // Get document id
+    var docid = location.search.substring(1);
+    // Get session id
+    req("POST", "/session", "docid=" + docid,
+        function(e) {
+            var sid = e.responseText;
+            setupEditor(docid, sid);
+        },
+        function(e) {
+            console.log("Could not get a session id");
+        }
+    );
+}
+
+function setupEditor(docid, sid) {
+    var ta = document.createElement("div");
+    document.body.appendChild(ta);
+    ta.style.position = "absolute";
+    ta.style.top = "5%";
+    ta.style.left = "5%";
+    ta.style.width = "90%";
+    ta.style.height = "90%";
+    
+    var editor = ace.edit(ta);
+    editor.setTheme("ace/theme/clouds");
+    
+    var session = editor.getSession();
+    session.selection.on("changeCursor", function(e) {
+        //console.log(e);
+        // TODO send position
+    });
+    
+    session.on("change", function(e) {
+        console.log(e);
+    });
+}
 
     </script>
 </head>

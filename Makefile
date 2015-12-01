@@ -49,19 +49,19 @@ run: compile
 	@-mkdir -p server/static
 	cp client/_build/client.js server/static/
 	cp client/index.html server/static/
-	cp -r client/codemirror server/static/
+	cp -r client/ace-min server/static/
 	ocsigenserver -c editor.conf
 
 clean:
 	@-rm -r _build
 	@-rm -r _cs3110
+	@-rm -r server
 	@-rm *.cmi
 	@-rm *.cmo
 	@-rm *.cmx
 	@-rm *.cma
 	@-rm *.o
 	@-rm *.js
-	@-rm -r static
 	cd client && $(MAKE) clean && cd ..
 
 install:

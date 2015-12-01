@@ -34,13 +34,11 @@ TEST_UNIT = get_document_text ctl doc_id === Some "Lorem ipsum"
 let deletion = [{op = Delete; pos = 0; text = "   "}]
 TEST = add_document_patches ctl doc_id [deletion]
 
-(* TODO: Not adding the patch list to the document  *)
-TEST_UNIT = match get_document_patches ctl doc_id (-1) with
-       | Some x -> (* let test = match x with h::t -> h.(Patch.patch.text) | [] -> failwith "no text" in print_string test; *)
-           let len = List.length x in
-           print_string ((string_of_int len)^"\n");
-           x === [deletion]
+TEST_UNIT = match get_document_patches ctl doc_id 0 with
+       | Some x ->
+           (x:patch list) === [deletion]
        | None -> failwith ""
+
 
 (* TODO: add test with adding two patch lists to document. Check order of patch lists *)
 

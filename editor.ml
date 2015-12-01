@@ -40,7 +40,24 @@ let create_doc_service =
           match set_document_metadata ctl newid {title} with
           | false -> failwith "Could not set document metadata"
           | true -> Lwt.return newid)
-    
+
+let access_doc_service = 
+  Eliom_registration.Html5.register_service
+    ~path:["doc"]
+    ~get_params:(string "id")
+    (fun (id) () ->
+      match get_document_metadata ctl id with
+      | None ->      
+         Lwt.return Eliom_content.Html5.D.(html (head (title (pcdata "Unknown Document")) []) 
+                                                (body [h1 [pcdata ("Document "^id^" does not exist.")]]))
+      | Some x ->
+         Lwt.return Eliom_content.Html5.D.(html ( head (title (pcdata "Unknown Document"))
+                                                       [css_link ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.css"]) ();
+                                                        js_script ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.js"]) ();
+                                                        js_script ~uri:(make_uri ~service:(static_dir ()) ["gui_js.js"]) ()]
+                                                )
+                                                (body [h1 [pcdata ("Title: "^x.title)]])))
+
 
 (* let doc_create_form = Eliom_registration.Html5.register_service ["doc_create_form"] unit *)
 (*   (fun () () -> *)

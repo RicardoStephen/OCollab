@@ -24,20 +24,20 @@ TEST = get_document_text ctl doc_id = Some "Lorem ipsum"
 TEST = match get_document_list ctl with | [] -> false | h::t -> t = []
 
 let doc_id2 = get_doc ctl
-TEST = set_document_text ctl doc_id2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-TEST = get_document_text ctl doc_id2 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-TEST = get_document_text ctl doc_id = "Lorem ipsum"
+TEST = set_document_text ctl doc_id2 "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+TEST = get_document_text ctl doc_id2 = Some "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+TEST = get_document_text ctl doc_id = Some "Lorem ipsum"
 
 
 (* Add a patch to a document and ensure that the new document reflects that
    that patch. *)
 let insertion = [{op  = Insert; pos = 0; text = "Insertion: "}]
-TEST = add_document_patches ctl doc_id insertion
-TEST = get_document_text ctl doc_id = "Insertion: Lorem ipsum"
+TEST = add_document_patches ctl doc_id [insertion]
+TEST = get_document_text ctl doc_id = Some "Insertion: Lorem ipsum"
 
 (* For a deletion, the length of text represents the number of characters to be deleted *)
 let deletion = [{op = Delete; pos = 0; text = "   "}]
-TEST = add_document_patches ctl doc_id deletion
+TEST = add_document_patches ctl doc_id [deletion]
 
 (*
 TEST = match get_document_patches ctl doc_id -1 with
@@ -46,4 +46,4 @@ TEST = match get_document_patches ctl doc_id -1 with
 *)
 
 (* Close connection *)
-storage_close ctl;
+let _ = storage_close ctl

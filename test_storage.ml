@@ -15,6 +15,8 @@ TEST = match ctlopt with Some _ -> true | None -> false
 
 let ctl = match ctlopt with Some c -> c | None -> failwith "Failed to connect"
 
+(* Empty the database first *)
+TEST_UNIT = storage_flush ctl true
 
 TEST_UNIT = print_string ((string_of_int (List.length (get_document_list ctl))) ^ "\n\n\n");
 get_document_list ctl === []
@@ -35,7 +37,7 @@ let deletion = [{op = Delete; pos = 0; text = "   "}]
 TEST = add_document_patches ctl doc_id [deletion]
 
 (* TODO: Not adding the patch list to the document  *)
-TEST_UNIT = match get_document_patches ctl doc_id (-1) with
+TEST_UNIT = match get_document_patches ctl doc_id 0 with
        | Some x -> (* let test = match x with h::t -> h.(Patch.patch.text) | [] -> failwith "no text" in print_string test; *)
            let len = List.length x in
            print_string ((string_of_int len)^"\n");

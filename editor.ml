@@ -54,7 +54,7 @@ let access_doc_service =
          Lwt.return Eliom_content.Html5.D.(html ( head (title (pcdata "Unknown Document"))
                                                        [css_link ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.css"]) ();
                                                         js_script ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.js"]) ();
-                                                        js_script ~uri:(make_uri ~service:(static_dir ()) ["gui_js.js"]) ()]
+                                                        js_script ~uri:(make_uri ~service:(static_dir ()) ["gui.js"]) ()]
                                                 )
                                                 (body [h1 [pcdata ("Title: "^x.title)]])))
 

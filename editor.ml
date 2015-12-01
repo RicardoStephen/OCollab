@@ -6,6 +6,8 @@ open Document
 open Eliom_content.Html5.D
 open Eliom_service
 
+(* TODO better handle error cases *)
+
 let ctl =
   match storage_open "127.0.0.1" 6379 with
   | Some x -> x
@@ -58,6 +60,14 @@ let access_doc_service =
                                                 )
                                                 (body [h1 [pcdata ("Title: "^x.title)]])))
 
+let get_full_doc_servcie =
+  Eliom_registration.Html_text.register_service
+    ~path:["get_doc_text"]
+    ~get_params:(string "id")
+    (fun (id) () ->
+      match get_document_text ctl id with
+      | None -> Lwt.return "Empty Document"
+      | Some x -> Lwt.return x)
 
 (* let doc_create_form = Eliom_registration.Html5.register_service ["doc_create_form"] unit *)
 (*   (fun () () -> *)

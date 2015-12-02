@@ -78,7 +78,7 @@ let get_document_patches ctl id n =
   let idkey = "document:" ^ id in
   if exists conn idkey then
     let key = idkey ^ ":patches" in
-    Some (List.map (fun s -> patch_of_string s) (lrange conn key (-n) (-1)))
+    Some (List.map (fun s -> patch_of_string s) (lrange conn key n (-1)))
   else
     None
 

@@ -101,44 +101,34 @@ let apply_patch doc p =
   in
   List.fold_left apply_edit doc p
 
-(* Using Yojson for this *)
-let rec string_of_patch p =
-  (*let f = fun acc x ->
-            let op_str = match x.op with Insert -> "Insert," | Delete -> "Delete," in
-            op_str ^ string_of_int x.pos ^ "," ^ x.text ^ ";" ^ acc in
-  List.fold_left f "" p
-*)
-  let rec get_json p j =
-    (* Convert patch to Yojson representing edits *)
-    match p with
-    | h::t ->
-      let to_add =
-        if h.op = Insert then
-          (* [Yojson.Basic.from_string "{\"op\":\"Insert\",\"pos\":0,\"text\":asdfasfasfasdf}"] *)
-          Yojson.Basic.from_string ("{\"op\":\"Insert\",\"pos\":" ^ (string_of_int h.pos) ^ ",\"text\":\"" ^ h.text ^  "\"}")
-        else
-          (* [Yojson.Basic.from_string "{\"op\":\"Delete\",\"pos\":0,\"text\":asdfasfasfasdf}"] *)
-          Yojson.Basic.from_string ("{\"op\":\"Delete\",\"pos\":" ^ (string_of_int h.pos) ^ ",\"text\":\"" ^ h.text ^  "\"}")
-      in
-      (get_json t (to_add::j))  (*Does this result in correct order?*)
-    | [] -> (* j *) `List(j) (*Creating json list from list of json elements where each element corresponds to one edit*)
-  in
-  Yojson.Basic.to_string (get_json p [])
+(* Using Yojson for serialization *)
 
-let patch_of_string p =
-  let json = Yojson.Basic.from_string p in
-  let lst_json = match json with
-  | `List(l) -> l
-  | _ -> failwith "Should be a list" in
+let json_of_patch p =
+  `List (List.map (fun e ->
+    let op = match e.op with Insert -> "Insert" | Delete -> "Delete" in
+    let pos = e.pos in
+    let text = e.text in
+    `Assoc [("op", `String op); ("pos", `Int pos); ("text", `String text)]
+  ) p)
 
-  let f = fun acc x ->
-    let record = match x with | `Assoc(v) -> v | _ -> failwith "Should be `Assoc" in
-    let operation = match snd (List.nth record 0) with `String(s) -> s | _ -> failwith "" in
-    let position = match snd (List.nth record 1) with `Int(i) -> i | _ -> failwith "" in
-    let text = match snd (List.nth record 2) with `String(s) -> s | _ -> failwith "" in
-    if operation = "Insert" then
-      {op = Insert; pos = position; text = text}::acc
-    else
-      {op = Delete; pos = position; text = text}::acc
-      in
-  List.fold_left f [] lst_json
+let string_of_patch p =
+  Yojson.Basic.pretty_to_string (json_of_patch p)
+
+let patch_of_json json =
+  let open Yojson.Basic.Util in
+  try
+    List.map
+      (fun ej -> {
+        op = (match to_string (member "op" ej) with
+          | "Insert" -> Insert
+          | "Delete" -> Delete
+          | _ -> failwith "Invalid operation");
+        pos = to_int (member "pos" ej);
+        text = to_string (member "text" ej)
+      })
+      (to_list json)
+  with
+    _ -> failwith "Invalid patch json string"
+
+let patch_of_string s =
+  patch_of_json (Yojson.Basic.from_string s)

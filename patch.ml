@@ -45,7 +45,6 @@ let merge p1 p2 =
     let len2 = String.length e2.text in
     let end1 = e1.pos + len1 in
     let end2 = e2.pos + len2 in
-    let diff = end1 - e2.pos in
     if e1.pos > e2.pos || (e1.pos = e2.pos && end1 > end2) then
       flip (merge_edit e2 e1)
     else

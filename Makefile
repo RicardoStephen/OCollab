@@ -35,7 +35,7 @@ gui.js:
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o static/gui.ml
 	js_of_ocaml static/gui.o
 
-gui_test.js:
+gui_test.js: gui_test.ml
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o gui_test.o gui_test.ml
 	js_of_ocaml gui_test.o
 

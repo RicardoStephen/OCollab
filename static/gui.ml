@@ -17,21 +17,34 @@ let set_full_doc mirror =
              Js._true);
   req##send(Js.null);
   ()
-         
-let handle_change _ =
-  (* let d = Html.window##document in *)
-  (* let body = d##body in *)
-  (* let textinput = Html.createInput ~_type:(Js.string "text") d in *)
-  (* textinput##defaultValue <- Js.string ("Document Name"); *)
-  (* textinput##size <- 20; *)
-  (* Dom.appendChild body textinput; *)
-  (* Js._false *)
-  (* let req = XmlHttpRequest.create () in *)
-  (* req##_open(Js.string "GET", *)
-  (*            Js.string ("/dummy"), *)
-  (*            Js._true); *)
-  (* req##send(Js.null); *)
-  (* Js._false *)
+
+type operation =  Add | Del
+
+let buffer = ref (Add, "")
+
+let translate_op obj =
+  let x = Js.to_string (obj##origin) in
+  match x with
+  | "+insert" -> Add
+  | "+delete" -> Del
+  | _ -> failwith "Good Grief"
+
+let update_buffer _ x =
+  match ((translate_op x) = (fst !buffer)) with
+  | true -> buffer := (fst !buffer, (snd !buffer)^(Array.get (Js.to_array (x##text)) 0));
+            Js._false
+  | false ->
+     let req = XmlHttpRequest.create () in
+     req##_open(Js.string "GET",
+                Js.string (snd (!buffer)),
+                Js._true);
+     req##send(Js.null);
+     buffer := (translate_op x, Array.get (Js.to_array (x##text)) 0);
+     Js._false
+
+(* Useful for testing *)         
+let handle_change _ x =
+  let _ = Js.Unsafe.meth_call Js.Unsafe.global##console "log" (Array.make 1 x) in
   Js._false
   
 
@@ -42,35 +55,22 @@ let start _ =
   (* let f = Js.wrap_callback handle_change in *)
   (* Js.Unsafe.global##cb <- f; *)
   (* Js.Unsafe.global##cb##apply <- Js.wrap_callback (fun x -> handle_change x); *)  
-(*  let f = Js.Unsafe.inject (Js.wrap_callback handle_change) in*)
+  (* let f = Js.Unsafe.inject (Js.wrap_callback handle_change) in*)
   (*Js.Unsafe.global##cb = Js.wrap_callback handle_change;*)
-  let source = jsnew EventSource.eventSource (Js.string "cb") in
-  let event = Dom.Event.make "change" in
-  let listener = EventSource.addEventListener source event (Dom.handler handle_change) in
+  (* let source = jsnew EventSource.eventSource (Js.string "cb") in *)
+  (* let event = Dom.Event.make "change" in *)
+  (* let listener = EventSource.addEventListener source obj (Dom.handler handle_change) in *)
   (* let f1 = Js.Unsafe.global##cb in *)
   (* let e = Js.Unsafe.inject (Js.string "change")in                *)
   (* let arr = Array.make 2 f1 in *)
   (* Array.set arr 0 e; *)
-  (* let _ = Js.Unsafe.meth_call obj "addEventListener" arr in *)
+  (* let _ = Js.Unsafe.meth_call obj "addEventListener" arr in *)  
+  (* let f = Js.Unsafe.inject update_buffer in *)
+  let f = Js.Unsafe.inject handle_change in
+  let e = Js.Unsafe.inject (Js.string "change") in
+  let arr = Array.make 2 f in
+  Array.set arr 0 e;
+  let _ = Js.Unsafe.meth_call obj "on" arr in
   Js._false
 
 let _ = Html.window##onload <- Html.handler start
-
-
-
-  (* let _ =  *)
-  (*   match Js.Opt.to_option (Html.CoerceTo._object handle_change) with *)
-  (*   | None ->  *)
-  (*      let req = XmlHttpRequest.create () in *)
-  (*      req##_open(Js.string "GET", *)
-  (*                 Js.string ("/not_an_object"), *)
-  (*            Js._true); *)
-  (*      req##send(Js.null); *)
-  (*      () *)
-  (*   | Some x -> *)
-  (*           let req = XmlHttpRequest.create () in *)
-  (*      req##_open(Js.string "GET", *)
-  (*                 Js.string ("/is_an_object"), *)
-  (*            Js._true); *)
-  (*      req##send(Js.null); *)
-  (*      () in      *)

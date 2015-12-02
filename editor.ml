@@ -88,9 +88,10 @@ let access_doc_service =
           | Some s -> s)
         in
         let script = Printf.sprintf
-          "var __doc_id = \'%s\';\n\
-           var __doc_text = \'%s\';\n\
-           var __doc_title = \'%s\'"
+          "var doc_id = \'%s\';\n\
+           var doc_text = \'%s\';\n\
+           var doc_title = \'%s\'\n\
+           console.log([doc_id, doc_text, doc_title]);\n"
           id text x.title
         in
         let script_node = Eliom_content.Html5.F.script (cdata_script script) in
@@ -98,7 +99,8 @@ let access_doc_service =
           html
             (head
               (title (pcdata "Unknown Document"))
-              [css_link ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.css"]) ();
+              [script_node;
+              css_link ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.css"]) ();
               js_script ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.js"]) ();
               js_script ~uri:(make_uri ~service:(static_dir ()) ["gui.js"]) ()])
             (body [h1 [pcdata ("Title: "^x.title)]])))

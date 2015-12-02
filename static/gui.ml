@@ -32,7 +32,7 @@ let handle_change _ =
   (*            Js._true); *)
   (* req##send(Js.null); *)
   (* Js._false *)
-  ()
+  Js._false
   
 
 let start _ =
@@ -43,12 +43,15 @@ let start _ =
   (* Js.Unsafe.global##cb <- f; *)
   (* Js.Unsafe.global##cb##apply <- Js.wrap_callback (fun x -> handle_change x); *)  
 (*  let f = Js.Unsafe.inject (Js.wrap_callback handle_change) in*)
-  Js.Unsafe.global##cb = Js.wrap_callback handle_change;
-  let f1 = Js.Unsafe.global##cb in
-  let e = Js.Unsafe.inject (Js.string "change")in               
-  let arr = Array.make 2 f1 in
-  Array.set arr 0 e;
-  let _ = Js.Unsafe.meth_call obj "addEventListener" arr in
+  (*Js.Unsafe.global##cb = Js.wrap_callback handle_change;*)
+  let source = jsnew EventSource.eventSource (Js.string "cb") in
+  let event = Dom.Event.make "change" in
+  let listener = EventSource.addEventListener source event (Dom.handler handle_change) in
+  (* let f1 = Js.Unsafe.global##cb in *)
+  (* let e = Js.Unsafe.inject (Js.string "change")in                *)
+  (* let arr = Array.make 2 f1 in *)
+  (* Array.set arr 0 e; *)
+  (* let _ = Js.Unsafe.meth_call obj "addEventListener" arr in *)
   Js._false
 
 let _ = Html.window##onload <- Html.handler start

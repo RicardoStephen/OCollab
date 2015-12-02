@@ -60,7 +60,7 @@ let access_doc_service =
                                                 )
                                                 (body [h1 [pcdata ("Title: "^x.title)]])))
 
-let get_full_doc_servcie =
+let get_full_doc_service =
   Eliom_registration.Html_text.register_service
     ~path:["get_doc_text"]
     ~get_params:(string "id")
@@ -68,6 +68,11 @@ let get_full_doc_servcie =
       match get_document_text ctl id with
       | None -> Lwt.return "Empty Document"
       | Some x -> Lwt.return x)
+
+(* let get_patch_service = failwith "TODO" *)
+(* let upload_patch_service = failwith "TODO" *)
+
+
 
 (* let doc_create_form = Eliom_registration.Html5.register_service ["doc_create_form"] unit *)
 (*   (fun () () -> *)

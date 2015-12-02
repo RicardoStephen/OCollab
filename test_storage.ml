@@ -18,7 +18,7 @@ let ctl = match ctlopt with Some c -> c | None -> failwith "Failed to connect"
 (* Empty the database first *)
 TEST_UNIT = storage_flush ctl true
 
-TEST_UNIT = (* print_string ((string_of_int (List.length (get_document_list ctl))) ^ "\n\n\n"); *)
+TEST_UNIT =
 get_document_list ctl === []
 let doc_id = get_doc ctl
 TEST = set_document_text ctl doc_id "Lorem ipsum"
@@ -43,28 +43,24 @@ TEST_UNIT = match get_document_patches ctl doc_id 0 with
 
 TEST_UNIT = get_document_text ctl doc_id === Some "em ipsum"
 
-
 let insertion = [{op  = Insert; pos = 0; text = "Insertion: "}]
 TEST = add_document_patches ctl doc_id2 [insertion]
 TEST_UNIT = get_document_text ctl doc_id2 === Some "Insertion: ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-
-
-(* Assumption is that edit_list1 is done before edit_list2 *)
 let doc_id3 = get_doc ctl
 let doc_id4 = get_doc ctl
-TEST = set_document_text ctl doc_id2 "text"
-TEST = set_document_text ctl doc_id2 "text2"
+TEST = set_document_text ctl doc_id3 "text"
+TEST = set_document_text ctl doc_id4 "text2"
+TEST_UNIT = get_document_text ctl doc_id3 === Some "text"
+TEST_UNIT = get_document_text ctl doc_id4 === Some "text2"
+
 let edit_list1 = [{op = Delete; pos = 2; text = " "}; {op = Insert; pos = 3; text = "<inserted text>"}]
-let edit_list2 = [{op = Delete; pos = 8 text = "    "}]
-(* TODO: check order *)
+let edit_list2 = [{op = Delete; pos = 8; text = "    "}]
 TEST = add_document_patches ctl doc_id3 [edit_list1]
-TEST_UNIT = get_document_text ctl doc_id3 === Some "tex<inserted text>"
-(* TODO: check order *)
+TEST_UNIT = get_document_text ctl doc_id3 === Some "tet<inserted text>"
+(* Applies edit_list1 and then edit_list2 *)
 TEST = add_document_patches ctl doc_id4 [edit_list1; edit_list2]
-TEST_UNIT = get_document_text ctl doc_id4 === Some "tex<inse text>"
-
-
+TEST_UNIT = get_document_text ctl doc_id4 === Some "tet<inse text>2"
 
 (* Testing get_document_text gives None when text hasn't been set yet. *)
 let doc_id5 = get_doc ctl
@@ -73,14 +69,10 @@ TEST_UNIT = get_document_text ctl doc_id5 === None
 (* Testing get_document_metadata gives None when metadata hasn't been set yet. *)
 TEST_UNIT = get_document_metadata ctl doc_id5 === None
 
-
-
-TEST_UNIT = get_document_list ctl === [doc_id; doc_id2; doc_id3; doc_id4; doc_id5]
-
-
-
-(* TODO: add test with adding two patch lists to document. Check order of patch lists *)
-(* Also check that text ends up as expected *)
+(* Ensuring get_document_list gives the appropriate document ids of existing documents *)
+let lst = get_document_list ctl
+TEST_UNIT = List.length lst === 5
+TEST = (List.for_all (fun x -> List.mem x [doc_id; doc_id2; doc_id3; doc_id4; doc_id5]) lst)
 
 (* Setting document metadata *)
 TEST = set_document_metadata ctl doc_id {title = "This is a title"}
@@ -89,6 +81,7 @@ TEST = match doc_metadata_option with Some x -> true | None -> false
 let doc_metadata = match doc_metadata_option with Some x -> x | None -> failwith "Get metadata failed"
 let doc_title = doc_metadata.title
 TEST_UNIT = doc_title === "This is a title"
+
 (* Close connection *)
 let _ = storage_close ctl
 

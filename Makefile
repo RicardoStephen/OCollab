@@ -32,7 +32,7 @@ create_doc.js:
 	js_of_ocaml static/create_doc.o
 
 gui.js:
-	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o static/gui.ml
+	ocamlfind ocamlc -package js_of_ocaml,yojson -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o static/gui.ml
 	js_of_ocaml static/gui.o
 
 gui_test.js: gui_test.ml

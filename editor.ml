@@ -5,6 +5,7 @@ open Storage
 open Document
 open Eliom_content.Html5.D
 open Eliom_service
+open Netencoding
 
 (* TODO better handle error cases *)
 
@@ -39,6 +40,7 @@ let create_doc_service =
     ~path:["create_doc"]
     ~get_params:(string "title")
     (fun (title) () ->
+       let title = Url.decode title in
        match document_create ctl with
        | None -> Lwt.return "" (* TODO better way to handle *)
        | Some newid -> 

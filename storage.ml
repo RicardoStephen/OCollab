@@ -111,6 +111,7 @@ let add_document_patches ctl id patches =
   if exists conn ("document:" ^ id) then
     (let key = "document:" ^ id ^ ":text" in
     let currtext = match get conn key with Some x -> x | None -> "" in
+    let _ = Printf.printf "%s\n\n" currtext in
     let newtext = List.fold_left apply_patch currtext patches in
     set conn key newtext; true) &&
     (let key = "document:" ^ id ^ ":patches" in

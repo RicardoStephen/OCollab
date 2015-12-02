@@ -6,6 +6,7 @@ open Document
 open Eliom_content.Html5.D
 open Eliom_service
 open Netencoding
+open Patch
 
 (* TODO better handle error cases *)
 
@@ -56,6 +57,35 @@ let main_service =
                (body [(h1 [pcdata ("Home")]);
                       (h3 [pcdata ("Welcome to the home page, where you can create you document.")]);
                       (h3 [pcdata ("Set a document name, and press \"Create\"")])])))
+
+let error_handler =
+  raise Eliom_common.Eliom_404
+
+
+let patch_no_post_service =
+  Eliom_service.Http.service
+    ~path:["exchange"]
+    ~get_params:Eliom_parameter.unit
+    error_handler
+
+let patch_service = 
+  Eliom_service.Http.post_service
+    ~fallback: patch_no_post_service
+    ~post_params:Eliom_parameter.(string "patch")
+                                   ()
+                                   
+
+let patch_service_handler _ value = 
+  let patch_json = Url.decode value in
+  let patch_in = patch_of_string patch_json in
+  let id = Eliom_reference.Volatile.get doc_id in
+  let patch_out = accept_patch id patch_in in
+  let patch_json = Url.encode (string_of_patch patch_out) in
+  Eliom_registration.String.send ~code:200 (patch_json, "application/json")
+
+let () = Eliom_registration.Any.register patch_service patch_service_handler; ()  
+     
+
 
 let create_doc_service =
   Eliom_registration.Html_text.register_service

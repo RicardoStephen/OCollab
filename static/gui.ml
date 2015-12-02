@@ -49,7 +49,6 @@ let apply_patch_cm cm p =
   in
   List.iter apply_edit_cm p
 
-
 let translate_op obj =
   let x = Js.to_string (obj##origin) in
   match x with

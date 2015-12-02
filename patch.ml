@@ -46,29 +46,32 @@ let merge p1 p2 =
     let end1 = e1.pos + len1 in
     let end2 = e2.pos + len2 in
     let diff = end1 - e2.pos in
-    if e1.pos > e2.pos || (e1.pos == e2.pos && end1 > end2) then flip (merge_edit e2 e1)
+    if e1.pos > e2.pos || (e1.pos = e2.pos && end1 > end2) then
+      flip (merge_edit e2 e1)
     else
-    match (e1.op, e2.op) with
-    | (Insert, Delete) -> ([{e2 with pos = e2.pos + (String.length e1.text)}], [e1])
-    | (Insert, Insert) -> ([{e2 with pos = e2.pos + (String.length e1.text)}], [e1])
-    | (Delete, Delete) ->
-      let a = min end1 end2 in
-      let b = max e1.pos e2.pos in
-      if b > a then
-        ([{e2 with pos = e2.pos - len1}], [e1])
-      else
-        (nonempty {e2 with pos = e1.pos; text = slice e2.text (a - e2.pos) len2},
-        compose
-          (nonempty {e1 with text = slice e1.text 0 (b - e1.pos)})
-          (nonempty {e1 with text = slice e1.text (a - e1.pos) len1}))
-    | (Delete, Insert) ->
-      if end1 <= e2.pos then
-        ([{e2 with pos = e2.pos - len1}], [e1])
-      else
-        ([{e2 with pos = e1.pos}],
-        compose
-          (nonempty {e1 with text = slice e1.text 0 (e2.pos - e1.pos)})
-          (nonempty {e1 with pos = e1.pos + len2; text = slice e1.text (e2.pos - e1.pos) len1}))
+      match (e1.op, e2.op) with
+      | (Insert, Delete) ->
+        ([{e2 with pos = e2.pos + (String.length e1.text)}], [e1])
+      | (Insert, Insert) ->
+        ([{e2 with pos = e2.pos + (String.length e1.text)}], [e1])
+      | (Delete, Delete) ->
+        let a = min end1 end2 in
+        let b = max e1.pos e2.pos in
+        if b > a then
+          ([{e2 with pos = e2.pos - len1}], [e1])
+        else
+          (nonempty {e2 with pos = e1.pos; text = slice e2.text (a - e2.pos) len2},
+          compose
+            (nonempty {e1 with text = slice e1.text 0 (b - e1.pos)})
+            (nonempty {e1 with text = slice e1.text (a - e1.pos) len1}))
+      | (Delete, Insert) ->
+        if end1 <= e2.pos then
+          ([{e2 with pos = e2.pos - len1}], [e1])
+        else
+          ([{e2 with pos = e1.pos}],
+          compose
+            (nonempty {e1 with text = slice e1.text 0 (e2.pos - e1.pos)})
+            (nonempty {e1 with pos = e1.pos + len2; text = slice e1.text (e2.pos - e1.pos) len1}))
   in
   let rec go p1 p2 =
     match (p1, p2) with

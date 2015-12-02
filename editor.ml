@@ -18,24 +18,30 @@ let create_document getp postp =
   | Some newid -> Lwt.return newid
   | None -> Lwt.return ""
 
-let last_patch = Eliom_reference.Volatile.eref
-  ~scope:Eliom_common.default_process_scope
-  -1
+let last_patch =
+  Eliom_reference.Volatile.eref ~scope:Eliom_common.default_process_scope (-1)
 
-let doc_id = Eliom_reference.Volatile.eref
-  ~scope:Eliom_common.default_process_scope
-  ""
+let doc_id =
+  Eliom_reference.Volatile.eref
+    ~scope:Eliom_common.default_process_scope
+    ""
 
 let accept_patch id p =
-  let n = Eliom_reference.Volatile.Ext.get last_patch in
-  let q = List.fold_left Patch.compose (get_document_patches ctl id n) in
+  let n = Eliom_reference.Volatile.get last_patch in
+  let ps = (
+    match get_document_patches ctl id n with
+    | None -> failwith "unable to read document patches"
+    | Some ps -> ps)
+  in
+  let q = List.fold_left Patch.compose Patch.empty_patch ps in
   let (q', p') = Patch.merge p q in
-  match add_document_patches id [p'] with
+  match add_document_patches ctl id [p'] with
   | false -> failwith "unable to add patch to document"
   | true  ->
-    let last = get_document_patch_count ctl id in
-    let _ = Eliom_reference.Volatile.Ext.set last_patch last in
-    q'
+    match get_document_patch_count ctl id with
+    | None -> failwith "unable to read document patch count"
+    | Some last -> 
+      let _ = Eliom_reference.Volatile.set last_patch last in q'
 
 let main_service =
   Eliom_registration.Html5.register_service
@@ -78,8 +84,8 @@ let access_doc_service =
         id
         text
       in
-      let script_node = Eliom_content.Html5.F.script (cdata_script script)) in
-      Eliom_reference.Volatile.Ext.set doc_id id;
+      let script_node = Eliom_content.Html5.F.script (cdata_script script) in
+      Eliom_reference.Volatile.set doc_id id;
       match get_document_metadata ctl id with
       | None ->      
          Lwt.return Eliom_content.Html5.D.(html (head (title (pcdata "Unknown Document")) []) 

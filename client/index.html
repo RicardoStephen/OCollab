@@ -2,6 +2,7 @@
 <head>
     <title>Collaborative Text Editor</title>
     <script type="text/javascript" src="ace-min/ace.js"></script>
+    <script type="text/javascript" src="client.js"></script>
     <script type="text/javascript">
 
 function req(type, path, params, success, error) {
@@ -37,11 +38,15 @@ window.addEventListener("load", function() {
 });
 
 function createHome() {
+    var l = document.createElement("label");
+    l.innerHTML = "Title:";
+    var t = document.createElement("input");
+    t.type = "text";
     var b = document.createElement("button");
     b.innerHTML = "Create a document";
     var out = document.createElement("div");
     b.addEventListener("click", function() {
-        req("GET", "/create", "",
+        req("POST", "/create", "title=" + encodeURIComponent(t.value),
             function(e) {
                 var id = this.responseText;
                 var newloc = "?" + id;
@@ -55,6 +60,9 @@ function createHome() {
             }
         );
     });
+    document.body.appendChild(l);
+    document.body.appendChild(t);
+    document.body.appendChild(document.createElement("br"));
     document.body.appendChild(b);
     document.body.appendChild(document.createElement("br"));
     document.body.appendChild(out);
@@ -66,7 +74,7 @@ function createEditor() {
     // Get session id
     req("POST", "/session", "docid=" + docid,
         function(e) {
-            var sid = e.responseText;
+            var sid = this.responseText;
             setupEditor(docid, sid);
         },
         function(e) {
@@ -75,27 +83,98 @@ function createEditor() {
     );
 }
 
+var DEBUG = {};
+
 function setupEditor(docid, sid) {
     var ta = document.createElement("div");
     document.body.appendChild(ta);
     ta.style.position = "absolute";
     ta.style.top = "5%";
-    ta.style.left = "5%";
-    ta.style.width = "90%";
+    ta.style.left = "2%";
+    ta.style.width = "45%";
     ta.style.height = "90%";
     
+    // Create an editor around the box
     var editor = ace.edit(ta);
     editor.setTheme("ace/theme/clouds");
     
+    req("POST", "/init", "sid=" + sid,
+        function(e) {
+            try {
+                var data = JSON.parse(this.responseText);
+                setupListeners(editor, docid, sid, data.title, data.text);
+            }
+            catch (e) {
+                console.log("Could not parse response:");
+                console.log(this.responseText);
+            }
+        },
+        function(e) {
+            console.log("Could not get initial document");
+        }
+    );
+}
+
+function setupListeners(editor, docid, sid, title, initialText) {
+    // Display the title at the top
+    var tdiv = document.createElement("div");
+    tdiv.innerHTML = title;
+    tdiv.style.position = "absolute";
+    tdiv.style.top = "10px";
+    tdiv.style.left = "10px";
+    tdiv.style.fontSize = "2em";
+    
+    // Get the editor session
     var session = editor.getSession();
+    editor.setValue(initialText);
+    
+    // Exchange data buffers
+    var edits = [];
+    
+    // Event listeners
     session.selection.on("changeCursor", function(e) {
         //console.log(e);
         // TODO send position
     });
     
+    // Turn a row / column to character position
+    var coordToPos = function(p) {
+        var offset = 0;
+        for (var i = 0; i < p.row; i++) {
+            offset += session.getScreenLastRowColumn(i) + 1;
+        }
+        offset += p.column;
+        return offset;
+    };
+    
     session.on("change", function(e) {
-        console.log(e);
+        if (editor.curOp && editor.curOp.command.name) {
+            var p = coordToPos(e.start);
+            var t = e.lines.join("\n");
+            var o = (e.action == "insert") ? "Insert" : (e.action == "remove") ? "Delete" : "";
+            edits.push({ "op" : o, "pos" : p, "text" : t });
+        }
     });
+    
+    // Exchange data
+    setInterval(function() {
+        // TODO Optimize edits
+        
+        // Prepare data to send
+        var data = { patch : edits };
+        req("POST", "/data",
+            "sid=" + sid + "&data=" + encodeURIComponent(JSON.stringify(data)),
+            function(e) {
+                console.log(JSON.parse(this.responseText));
+            },
+            function(e) {
+            }
+        );
+        edits = [];
+    }, 5000);
+    
+    DEBUG.editor = editor;
+    DEBUG.session = session;
 }
 
     </script>

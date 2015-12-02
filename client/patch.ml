@@ -44,7 +44,7 @@ let merge p1 p2 =
     let len2 = String.length e2.text in
     let end1 = e1.pos + len1 in
     let end2 = e2.pos + len2 in
-    let diff = end1 - e2.pos in
+    (*let diff = end1 - e2.pos in*)
     if e1.pos > e2.pos || (e1.pos == e2.pos && end1 > end2) then flip (merge_edit e2 e1)
     else
     match (e1.op, e2.op) with
@@ -94,19 +94,21 @@ let apply_patch doc p =
   in
   List.fold_left apply_edit doc p
 
-(* Using Yojson for this *)
-let rec string_of_patch p =
-  Yojson.Basic.pretty_to_string
-    (`List (List.map (fun e ->
-      let op = match e.op with Insert -> "Insert" | Delete -> "Delete" in
-      let pos = e.pos in
-      let text = e.text in
-      `Assoc [("op", `String op); ("pos", `Int pos); ("text", `String text)]
-    ) p))
+(* Using Yojson for serialization *)
 
-let patch_of_string s =
+let json_of_patch p =
+  `List (List.map (fun e ->
+    let op = match e.op with Insert -> "Insert" | Delete -> "Delete" in
+    let pos = e.pos in
+    let text = e.text in
+    `Assoc [("op", `String op); ("pos", `Int pos); ("text", `String text)]
+  ) p)
+
+let string_of_patch p =
+  Yojson.Basic.pretty_to_string (json_of_patch p)
+
+let patch_of_json json =
   let open Yojson.Basic.Util in
-  let json = Yojson.Basic.from_string s in
   try
     List.map
       (fun ej -> {
@@ -121,3 +123,5 @@ let patch_of_string s =
   with
     _ -> failwith "Invalid patch json string"
 
+let patch_of_string s =
+  patch_of_json (Yojson.Basic.from_string s)

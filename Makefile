@@ -7,7 +7,7 @@ OCN=ocamlfind ocamlopt
 # Client side packages
 CLIENT_PKGS=
 # Server side packages
-SERVER_PKGS=yojson,redis,eliom.server
+SERVER_PKGS=yojson,netstring,redis,eliom.server
 # Unit test packages
 TEST_PKGS=pa_ounit,yojson,redis
 

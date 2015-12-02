@@ -46,7 +46,11 @@ let document_create ctl =
       if exists conn key then
         try_create (count - 1)
       else
-        (set conn key id; ignore (sadd conn "documents" id); Some id)
+        (
+          set conn key id;
+          ignore (sadd conn "documents" id);
+          Some id
+        )
   in
   (* Try 100 times to create a new document *)
   try_create 100
@@ -59,8 +63,9 @@ let get_document_list ctl =
 let get_document_metadata ctl id =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  let key = "document:" ^ id ^ ":metadata" in
-  if exists conn key then
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
+    let key = idkey ^ ":metadata" in
     match hget conn key "title" with
     | Some t -> Some ({ title = t })
     | None -> None
@@ -70,22 +75,38 @@ let get_document_metadata ctl id =
 let get_document_patches ctl id n =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  let key = "document:" ^ id ^ ":patches" in
-  if exists conn key then
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
+    let key = idkey ^ ":patches" in
     Some (List.map (fun s -> patch_of_string s) (lrange conn key (-n) (-1)))
+  else
+    None
+
+let get_document_patch_count ctl id =
+  let open Redis_sync.Client in
+  let conn = ctl.conn in
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
+    let key = idkey ^ ":patches" in
+    Some (llen conn key)
   else
     None
 
 let get_document_text ctl id =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  let key = "document:" ^ id ^ ":text" in
-  get conn key
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
+    let key = idkey ^ ":text" in
+    get conn key
+  else
+    None
 
 let get_document ctl id =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  if exists conn ("document:" ^ id) then
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
     let m = get_document_metadata ctl id in
     let p = get_document_patches ctl id 0 in
     let t = get_document_text ctl id in
@@ -99,7 +120,8 @@ let get_document ctl id =
 let set_document_metadata ctl id data =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  if exists conn ("document:" ^ id) then
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
     let key = "document:" ^ id ^ ":metadata" in
     hset conn key "title" data.title
   else
@@ -108,12 +130,13 @@ let set_document_metadata ctl id data =
 let add_document_patches ctl id patches =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  if exists conn ("document:" ^ id) then
-    (let key = "document:" ^ id ^ ":text" in
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
+    (let key = idkey ^ ":text" in
     let currtext = match get conn key with Some x -> x | None -> "" in
     let newtext = List.fold_left apply_patch currtext patches in
     set conn key newtext; true) &&
-    (let key = "document:" ^ id ^ ":patches" in
+    (let key = idkey ^ ":patches" in
     List.fold_left (fun r p ->
       r && (rpush conn key (string_of_patch p)) > 0) true patches)
   else
@@ -122,8 +145,9 @@ let add_document_patches ctl id patches =
 let set_document_patches ctl id patches =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  if exists conn ("document:" ^ id) then
-    let key = "document:" ^ id ^ ":patches" in
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
+    let key = idkey ^ ":patches" in
     (del conn [key] == 1) &&
     (add_document_patches ctl id patches)
   else
@@ -132,8 +156,9 @@ let set_document_patches ctl id patches =
 let set_document_text ctl id text =
   let open Redis_sync.Client in
   let conn = ctl.conn in
-  if exists conn ("document:" ^ id) then
-    let key = "document:" ^ id ^ ":text" in
+  let idkey = "document:" ^ id in
+  if exists conn idkey then
+    let key = idkey ^ ":text" in
     (set conn key text; true)
   else
     false

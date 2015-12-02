@@ -67,6 +67,18 @@ let access_doc_service =
     ~path:["doc"]
     ~get_params:(string "id")
     (fun (id) () ->
+      let text = (
+        match get_document_text ctl id with
+        | None -> ""
+        | Some s -> s)
+      in
+      let script = Printf.sprintf
+        "var __doc_id = \'%s\';\n\
+         var __doc_text = \'%s\';\n"
+        id
+        text
+      in
+      let script_node = Eliom_content.Html5.F.script (cdata_script script)) in
       Eliom_reference.Volatile.Ext.set doc_id id;
       match get_document_metadata ctl id with
       | None ->      

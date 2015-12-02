@@ -26,19 +26,29 @@ let handle_change _ =
   (* textinput##size <- 20; *)
   (* Dom.appendChild body textinput; *)
   (* Js._false *)
-  let req = XmlHttpRequest.create () in
-  req##_open(Js.string "GET",
-             Js.string ("/dummy"),
-             Js._true);
-  req##send(Js.null);
-  Js._false
+  (* let req = XmlHttpRequest.create () in *)
+  (* req##_open(Js.string "GET", *)
+  (*            Js.string ("/dummy"), *)
+  (*            Js._true); *)
+  (* req##send(Js.null); *)
+  (* Js._false *)
+  ()
   
 
 let start _ =
   let body = Js.Unsafe.inject Html.window##document##body in
   let obj = Js.Unsafe.meth_call Js.Unsafe.global "CodeMirror" (Array.make 1 body) in
   set_full_doc obj;
-  let _ = Js.Unsafe.meth_call obj "addEventListener" (Array.make 1 (Js.Unsafe.inject handle_change)) in
+  (* let f = Js.wrap_callback handle_change in *)
+  (* Js.Unsafe.global##cb <- f; *)
+  (* Js.Unsafe.global##cb##apply <- Js.wrap_callback (fun x -> handle_change x); *)  
+(*  let f = Js.Unsafe.inject (Js.wrap_callback handle_change) in*)
+  Js.Unsafe.global##cb = Js.wrap_callback handle_change;
+  let f1 = Js.Unsafe.global##cb in
+  let e = Js.Unsafe.inject (Js.string "change")in               
+  let arr = Array.make 2 f1 in
+  Array.set arr 0 e;
+  let _ = Js.Unsafe.meth_call obj "addEventListener" arr in
   Js._false
 
 let _ = Html.window##onload <- Html.handler start

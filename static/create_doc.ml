@@ -27,7 +27,7 @@ let create_form _ =
        let callback = Js.wrap_callback f in
        req##onreadystatechange <- callback;
        req##_open(Js.string "GET", 
-                 (Js.string ("/create_doc?title="))##concat(value),
+                 (Js.string ("/create_doc?title="))##concat(Js.encodeURI value),
                  Js._true);
        req##send(Js.null);
        Js._false

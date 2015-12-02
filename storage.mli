@@ -53,6 +53,11 @@ val get_document_metadata : controller -> document_id -> document_metadata optio
 val get_document_patches : controller -> document_id -> int -> patch list option
 
 (*
+ * Returns the number of patches in a document.
+ *)
+val get_document_patch_count : controller -> document_id -> int option
+
+(*
  * Retrieves document full text given an id.
  *)
 val get_document_text : controller -> document_id -> document_text option

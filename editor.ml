@@ -22,12 +22,15 @@ let last_patch = Eliom_reference.Volatile.eref ~scope:Eliom_common.default -1
 let doc_id = Eliom_reference.Volatile.eref ~scope:Eliom_common.default ""
 
 let accept_patch id p =
-  let n = Elion_reference.Volatile.Ext.get last_patch in
+  let n = Eliom_reference.Volatile.Ext.get last_patch in
   let q = List.fold_left Patch.compose (get_document_patches ctl id n) in
   let (q', p') = Patch.merge p q in
   match add_document_patches id [p'] with
   | false -> failwith "unable to add patch to document"
-  | true  -> q'
+  | true  ->
+    let last = get_document_patch_count ctl id in
+    let _ = Eliom_reference.Volatile.Ext.set last_patch last in
+    q'
 
 let main_service =
   Eliom_registration.Html5.register_service

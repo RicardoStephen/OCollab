@@ -77,28 +77,31 @@ let access_doc_service =
     (fun (id) () ->
       Eliom_reference.Volatile.set doc_id id;
       match get_document_metadata ctl id with
-      | None ->      
-         Lwt.return Eliom_content.Html5.D.(html (head (title (pcdata "Unknown Document")) []) 
-                                                (body [h1 [pcdata ("Document "^id^" does not exist.")]]))
+      | None -> Lwt.return Eliom_content.Html5.D.(
+        html
+          (head (title (pcdata "Unknown Document")) []) 
+          (body [h1 [pcdata ("Document "^id^" does not exist.")]]))
       | Some x ->
-      let text = (
-        match get_document_text ctl id with
-        | None -> ""
-        | Some s -> s)
-      in
-      let script = Printf.sprintf
-        "var __doc_id = \'%s\';\n\
-         var __doc_text = \'%s\';\n
-         var __doc_title = \'%s\'"
-        id text title
-      in
-      let script_node = Eliom_content.Html5.F.script (cdata_script script) in
-         Lwt.return Eliom_content.Html5.D.(html ( head (title (pcdata "Unknown Document"))
-                                                       [css_link ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.css"]) ();
-                                                        js_script ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.js"]) ();
-                                                        js_script ~uri:(make_uri ~service:(static_dir ()) ["gui.js"]) ()]
-                                                )
-                                                (body [h1 [pcdata ("Title: "^x.title)]])))
+        let text = (
+          match get_document_text ctl id with
+          | None -> ""
+          | Some s -> s)
+        in
+        let script = Printf.sprintf
+          "var __doc_id = \'%s\';\n\
+           var __doc_text = \'%s\';\n\
+           var __doc_title = \'%s\'"
+          id text x.title
+        in
+        let script_node = Eliom_content.Html5.F.script (cdata_script script) in
+        Lwt.return Eliom_content.Html5.D.(
+          html
+            (head
+              (title (pcdata "Unknown Document"))
+              [css_link ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.css"]) ();
+              js_script ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.js"]) ();
+              js_script ~uri:(make_uri ~service:(static_dir ()) ["gui.js"]) ()])
+            (body [h1 [pcdata ("Title: "^x.title)]])))
 
 let get_full_doc_service =
   Eliom_registration.Html_text.register_service

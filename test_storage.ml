@@ -53,16 +53,19 @@ TEST_UNIT = get_document_text ctl doc_id2 === Some "Insertion: ABCDEFGHIJKLMNOPQ
 (* Assumption is that edit_list1 is done before edit_list2 *)
 let doc_id3 = get_doc ctl
 let doc_id4 = get_doc ctl
-TEST = set_document_text ctl doc_id2 "text"
-TEST = set_document_text ctl doc_id2 "text2"
+TEST = set_document_text ctl doc_id3 "text"
+TEST = set_document_text ctl doc_id4 "text2"
+TEST_UNIT = get_document_text ctl doc_id3 === Some "text"
+TEST_UNIT = get_document_text ctl doc_id4 === Some "text2"
+
 let edit_list1 = [{op = Delete; pos = 2; text = " "}; {op = Insert; pos = 3; text = "<inserted text>"}]
-let edit_list2 = [{op = Delete; pos = 8 text = "    "}]
+let edit_list2 = [{op = Delete; pos = 8; text = "    "}]
 (* TODO: check order *)
 TEST = add_document_patches ctl doc_id3 [edit_list1]
-TEST_UNIT = get_document_text ctl doc_id3 === Some "tex<inserted text>"
+TEST_UNIT = get_document_text ctl doc_id3 === Some "tet<inserted text>"
 (* TODO: check order *)
 TEST = add_document_patches ctl doc_id4 [edit_list1; edit_list2]
-TEST_UNIT = get_document_text ctl doc_id4 === Some "tex<inse text>"
+TEST_UNIT = get_document_text ctl doc_id4 === Some "tet<inse text>2"
 
 
 

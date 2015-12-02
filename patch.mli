@@ -64,9 +64,19 @@ val merge : patch -> patch -> patch * patch
 val apply_patch : document_text -> patch -> document_text
 
 (*
+ * Converts a patch to a json representation.
+ *)
+val json_of_patch : patch -> Yojson.Basic.json
+
+(*
  * Converts a patch to a string representation.
  *)
 val string_of_patch : patch -> string
+
+(*
+ * Converts a string representation to a patch.
+ *)
+val patch_of_json : Yojson.Basic.json -> patch
 
 (*
  * Converts a string representation to a patch.

@@ -19,16 +19,32 @@ let create_document getp postp =
   | Some newid -> Lwt.return newid
   | None -> Lwt.return ""
 
-let last_patch = Eliom_reference.Volatile.eref ~scope:Eliom_common.default -1
-let doc_id = Eliom_reference.Volatile.eref ~scope:Eliom_common.default ""
+let last_patch = Eliom_reference.Volatile.eref
+  ~scope:Eliom_common.default_process_scope
+  -1
+
+let doc_id = Eliom_reference.Volatile.eref
+  ~scope:Eliom_common.default_process_scope
+  ""
+
+let accept_patch id p =
+  let n = Eliom_reference.Volatile.Ext.get last_patch in
+  let q = List.fold_left Patch.compose (get_document_patches ctl id n) in
+  let (q', p') = Patch.merge p q in
+  match add_document_patches id [p'] with
+  | false -> failwith "unable to add patch to document"
+  | true  ->
+    let last = get_document_patch_count ctl id in
+    let _ = Eliom_reference.Volatile.Ext.set last_patch last in
+    q'
 
 let main_service =
   Eliom_registration.Html5.register_service
     ~path:[]
     ~get_params:unit
     (fun () () ->
-       Lwt.return
-         Eliom_content.Html5.D.(html ( head (title (pcdata "Collaborative Document Editor"))
+      Lwt.return
+        Eliom_content.Html5.D.(html ( head (title (pcdata "Collaborative Document Editor"))
                      [js_script ~uri:(make_uri ~service:(static_dir ()) ["create_doc.js"]) ();]
                )
                (body [(h1 [pcdata ("Home")]);
@@ -53,6 +69,18 @@ let access_doc_service =
     ~path:["doc"]
     ~get_params:(string "id")
     (fun (id) () ->
+      let text = (
+        match get_document_text ctl id with
+        | None -> ""
+        | Some s -> s)
+      in
+      let script = Printf.sprintf
+        "var __doc_id = \'%s\';\n\
+         var __doc_text = \'%s\';\n"
+        id
+        text
+      in
+      let script_node = Eliom_content.Html5.F.script (cdata_script script)) in
       Eliom_reference.Volatile.Ext.set doc_id id;
       match get_document_metadata ctl id with
       | None ->      

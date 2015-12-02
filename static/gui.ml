@@ -1,4 +1,5 @@
 module Html = Dom_html
+(* open Patch *)
 
 let docid = 
   let search = Dom_html.window##location##search in
@@ -22,6 +23,31 @@ type operation =  Add | Del
 
 let buffer = ref (Add, "")
 
+let cur_patch = ref []
+
+let patch_of_change cm obj =
+  let st = truncate (Js.float_of_number (cm##indexFromPos(obj##from))) in
+  let en = truncate (Js.float_of_number (cm##indexFromPos(obj##from))) in
+  let text = Js.to_string (obj##text##join(Js.string "\n")) in
+  (* needs to attach to beforeChange so we can get the text before it's gone *)
+  let dtext = Js.to_string (cm##getRange(obj##from, obj##to, Js.string "\n")) in
+  let del = if st = en then [] else [{op = Delete; pos = st; text = dtext}] in
+  let ins = if text = "" then [] else [{op = Insert; pos = st; text = text}] in
+  compose del ins
+
+let apply_patch cm patch =
+  let apply_edit edit =
+    let st = cm##posFromIndex(Js.number_of_float (float_of_int patch.pos)) in
+    match patch.op with
+    | Insert ->
+      let _ = cm##replaceRange(Js.string patch.text, st, st) in ()
+    | Delete ->
+      let en = cm##posFromIndex(Js.number_of_float (float_of_int (patch.pos + (String.length patch.text))) in
+      let _ = cm##replaceRange(Js.string "", st, en) in ()
+  in
+  List.iter apply_edit patch
+
+
 let translate_op obj =
   let x = Js.to_string (obj##origin) in
   match x with
@@ -29,7 +55,8 @@ let translate_op obj =
   | "+delete" -> Del
   | _ -> failwith "Good Grief"
 
-let update_buffer _ x =
+let update_buffer cm x =
+  (* cur_patch := compose cur_patch (patch_of_change cm x); *)
   match ((translate_op x) = (fst !buffer)) with
   | true -> buffer := (fst !buffer, (snd !buffer)^(Array.get (Js.to_array (x##text)) 0));
             Js._false

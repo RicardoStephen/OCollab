@@ -31,8 +31,8 @@ create_doc.js:
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/create_doc.o static/create_doc.ml
 	js_of_ocaml static/create_doc.o
 
-gui.js:
-	ocamlfind ocamlc -package js_of_ocaml,yojson -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o static/gui.ml
+gui.js: static/gui.ml patch.cmo
+	ocamlfind ocamlc -package js_of_ocaml,yojson -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o patch.cmo static/gui.ml
 	js_of_ocaml static/gui.o
 
 gui_test.js: gui_test.ml

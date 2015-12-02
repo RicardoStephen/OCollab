@@ -1,5 +1,5 @@
 module Html = Dom_html
-(* open Patch *)
+open Patch
 
 let docid = 
   let search = Dom_html.window##location##search in
@@ -23,29 +23,31 @@ type operation =  Add | Del
 
 let buffer = ref (Add, "")
 
-let cur_patch = ref []
+let cur_patch = ref empty_patch
 
 let patch_of_change cm obj =
-  let st = truncate (Js.float_of_number (cm##indexFromPos(obj##from))) in
-  let en = truncate (Js.float_of_number (cm##indexFromPos(obj##from))) in
+  let frm = Js.Unsafe.get obj (Js.string "from") in
+  let too = Js.Unsafe.get obj (Js.string "to") in
+  let st = truncate (Js.float_of_number (cm##indexFromPos(frm))) in
+  let en = truncate (Js.float_of_number (cm##indexFromPos(too))) in
   let text = Js.to_string (obj##text##join(Js.string "\n")) in
   (* needs to attach to beforeChange so we can get the text before it's gone *)
-  let dtext = Js.to_string (cm##getRange(obj##from, obj##to, Js.string "\n")) in
+  let dtext = Js.to_string (cm##getRange(frm, too, Js.string "\n")) in
   let del = if st = en then [] else [{op = Delete; pos = st; text = dtext}] in
   let ins = if text = "" then [] else [{op = Insert; pos = st; text = text}] in
   compose del ins
 
-let apply_patch cm patch =
-  let apply_edit edit =
-    let st = cm##posFromIndex(Js.number_of_float (float_of_int patch.pos)) in
-    match patch.op with
+let apply_patch_cm cm p =
+  let apply_edit_cm e =
+    let st = cm##posFromIndex(Js.number_of_float (float_of_int e.pos)) in
+    match e.op with
     | Insert ->
-      let _ = cm##replaceRange(Js.string patch.text, st, st) in ()
+      let _ = cm##replaceRange(Js.string e.text, st, st) in ()
     | Delete ->
-      let en = cm##posFromIndex(Js.number_of_float (float_of_int (patch.pos + (String.length patch.text))) in
+      let en = cm##posFromIndex(Js.number_of_float (float_of_int (e.pos + (String.length e.text)))) in
       let _ = cm##replaceRange(Js.string "", st, en) in ()
   in
-  List.iter apply_edit patch
+  List.iter apply_edit_cm p
 
 
 let translate_op obj =

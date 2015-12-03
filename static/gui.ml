@@ -35,8 +35,7 @@ let apply_patch_cm cm p =
   in
   List.iter apply_edit_cm p
 
-let update_buffer cm x =
-  (* cur_patch := compose cur_patch (patch_of_change cm x); *)
+let send_to_server _ =
   let req = XmlHttpRequest.create () in
   req##_open(Js.string "GET",
              Js.string (string_of_patch !cur_patch),
@@ -45,8 +44,9 @@ let update_buffer cm x =
   Js._false
 
 (* Useful for testing *)         
-let handle_change _ x =
-  let _ = Js.Unsafe.global##console##log(x) in
+let handle_change cm x =
+  cur_patch := compose !cur_patch (patch_of_change cm x);
+  let _ = Js.Unsafe.global##console##log(Js.string (string_of_patch !cur_patch)) in
   Js._false
 
 let start _ =
@@ -54,10 +54,8 @@ let start _ =
   let cm = Js.Unsafe.meth_call Js.Unsafe.global "CodeMirror" (Array.make 1 body) in
   let _ = set_full_doc cm in
   let f = Js.Unsafe.inject handle_change in
-  let e = Js.Unsafe.inject (Js.string "change") in
-  let arr = Array.make 2 f in
-  Array.set arr 0 e;
-  let _ = Js.Unsafe.meth_call cm "on" arr in
+  let e = Js.Unsafe.inject (Js.string "beforeChange") in
+  let _ = cm##on(e, f) in
   Js._false
 
 let _ = Html.window##onload <- Html.handler start

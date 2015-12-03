@@ -28,7 +28,18 @@ let doc_id =
     ~scope:Eliom_common.default_process_scope
     ""
 
+let locks = Hashtbl.create 100
+
+let acquire_doc_lock id =
+  if not (Hashtbl.mem locks id) then
+    Hashtbl.replace locks id (Mutex.create ())
+  else ();
+  Mutex.lock (Hashtbl.find locks id)
+
+let release_doc_lock id = Mutex.unlock (Hashtbl.find locks id)
+
 let accept_patch id p =
+  let _ = acquire_doc_lock id in
   let n = Eliom_reference.Volatile.get last_patch in
   let ps = (
     match get_document_patches ctl id n with
@@ -37,7 +48,9 @@ let accept_patch id p =
   in
   let q = List.fold_left Patch.compose Patch.empty_patch ps in
   let (q', p') = Patch.merge p q in
-  match add_document_patches ctl id [p'] with
+  let result = add_document_patches ctl id [p'] in
+  let _ = release_doc_lock id in
+  match result with
   | false -> failwith "unable to add patch to document"
   | true  ->
     match get_document_patch_count ctl id with

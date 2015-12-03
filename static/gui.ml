@@ -37,18 +37,17 @@ let apply_patch_cm cm p =
 
 let update_buffer cm x =
   (* cur_patch := compose cur_patch (patch_of_change cm x); *)
-   let req = XmlHttpRequest.create () in
-   req##_open(Js.string "GET",
-              Js.string (string_of_patch !cur_patch),
-              Js._true);
-   req##send(Js.null);
-   Js._false
+  let req = XmlHttpRequest.create () in
+  req##_open(Js.string "GET",
+             Js.string (string_of_patch !cur_patch),
+             Js._true);
+  req##send(Js.null);
+  Js._false
 
 (* Useful for testing *)         
 let handle_change _ x =
   let _ = Js.Unsafe.global##console##log(x) in
   Js._false
-  
 
 let start _ =
   let body = Js.Unsafe.inject Html.window##document##body in

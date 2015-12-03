@@ -58,22 +58,21 @@ let main_service =
                       (h3 [pcdata ("Welcome to the home page, where you can create you document.")]);
                       (h3 [pcdata ("Set a document name, and press \"Create\"")])])))
 
-let error_handler =
-  raise Eliom_common.Eliom_404
+(* let error_handler _ _ = *)
+(*   raise Eliom_common.Eliom_404 *)
 
 
 let patch_no_post_service =
   Eliom_service.Http.service
     ~path:["exchange"]
     ~get_params:Eliom_parameter.unit
-    error_handler
+    ()
 
 let patch_service = 
   Eliom_service.Http.post_service
     ~fallback: patch_no_post_service
     ~post_params:Eliom_parameter.(string "patch")
                                    ()
-                                   
 
 let patch_service_handler _ value = 
   let patch_json = Url.decode value in
@@ -120,7 +119,7 @@ let access_doc_service =
         "var __doc_id = \'%s\';\n\
          var __doc_text = \'%s\';\n
          var __doc_title = \'%s\'"
-        id text title
+        id text x.title
       in
       let script_node = Eliom_content.Html5.F.script (cdata_script script) in
          Lwt.return Eliom_content.Html5.D.(html ( head (title (pcdata "Unknown Document"))

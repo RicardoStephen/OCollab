@@ -27,6 +27,15 @@ let doc_id =
   Eliom_reference.Volatile.eref
     ~scope:Eliom_common.default_process_scope
     ""
+let locks = Hashtbl.create 100
+
+let acquire_doc_lock id =
+  if not (Hashtbl.mem locks id) then
+    Hashtbl.replace locks id (Mutex.create ())
+  else ();
+  Mutex.lock (Hashtbl.find locks id)
+
+let release_doc_lock id = Mutex.unlock (Hashtbl.find locks id)
 
 let accept_patch id p =
   let n = Eliom_reference.Volatile.get last_patch in

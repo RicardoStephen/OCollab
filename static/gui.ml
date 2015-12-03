@@ -35,13 +35,20 @@ let apply_patch_cm cm p =
   in
   List.iter apply_edit_cm p
 
-let send_to_server _ =
+let rec send_to_server cm () : unit =
   let req = XmlHttpRequest.create () in
-  req##_open(Js.string "GET",
-             Js.string (string_of_patch !cur_patch),
-             Js._true);
-  req##send(Js.null);
-  Js._false
+  let patch_string = Js.string (string_of_patch !cur_patch) in
+  let args = (Js.string "patch=")##concat(Js.encodeURIComponent patch_string) in
+  req##_open(Js.string "POST", Js.string "/exchange", Js._true);
+  req##send(Js.some args);
+  match (req##readyState, req##status) with
+  | (XmlHttpRequest.DONE, 200) ->
+    apply_patch_cm cm (patch_of_string (Js.to_string req##responseText))
+  | _ -> ();
+  let _ = start_reqs cm in
+  ()
+and start_reqs cm =
+  Dom_html.window##setTimeout(Js.wrap_callback (send_to_server cm), 1.0)
 
 (* Useful for testing *)         
 let handle_change cm x =

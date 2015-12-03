@@ -135,6 +135,3 @@ let get_full_doc_service =
       match get_document_text ctl id with
       | None -> Lwt.return "Empty Document"
       | Some x -> Lwt.return x)
-
-
-(* let () = Eliom_registration.Any.register_post_service patch_service patch_service_handler; () *)

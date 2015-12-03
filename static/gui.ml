@@ -9,6 +9,8 @@ let set_full_doc cm = cm##setValue(fulltext)
 
 let cur_patch = ref empty_patch
 
+let jsnum_of_int n = Js.number_of_float (float_of_int n)
+
 let patch_of_change cm obj =
   let frm = Js.Unsafe.get obj (Js.string "from") in
   let too = Js.Unsafe.get obj (Js.string "to") in
@@ -23,42 +25,29 @@ let patch_of_change cm obj =
 
 let apply_patch_cm cm p =
   let apply_edit_cm e =
-    let st = cm##posFromIndex(Js.number_of_float (float_of_int e.pos)) in
+    let st = cm##posFromIndex(jsnum_of_int e.pos) in
     match e.op with
     | Insert ->
       let _ = cm##replaceRange(Js.string e.text, st, st) in ()
     | Delete ->
-      let en = cm##posFromIndex(Js.number_of_float (float_of_int (e.pos + (String.length e.text)))) in
+      let en = cm##posFromIndex(jsnum_of_int (e.pos + (String.length e.text))) in
       let _ = cm##replaceRange(Js.string "", st, en) in ()
   in
   List.iter apply_edit_cm p
 
-let translate_op obj =
-  let x = Js.to_string (obj##origin) in
-  match x with
-  | "+insert" -> Add
-  | "+delete" -> Del
-  | _ -> failwith "Good Grief"
-
 let update_buffer cm x =
   (* cur_patch := compose cur_patch (patch_of_change cm x); *)
-  match ((translate_op x) = (fst !buffer)) with
-  | true -> buffer := (fst !buffer, (snd !buffer)^(Array.get (Js.to_array (x##text)) 0));
-            Js._false
-  | false ->
-     let req = XmlHttpRequest.create () in
-     req##_open(Js.string "GET",
-                Js.string (snd (!buffer)),
-                Js._true);
-     req##send(Js.null);
-     buffer := (translate_op x, Array.get (Js.to_array (x##text)) 0);
-     Js._false
+  let req = XmlHttpRequest.create () in
+  req##_open(Js.string "GET",
+             Js.string (string_of_patch !cur_patch),
+             Js._true);
+  req##send(Js.null);
+  Js._false
 
 (* Useful for testing *)         
 let handle_change _ x =
-  let _ = Js.Unsafe.meth_call Js.Unsafe.global##console "log" (Array.make 1 x) in
+  let _ = Js.Unsafe.global##console##log(x) in
   Js._false
-  
 
 let start _ =
   let body = Js.Unsafe.inject Html.window##document##body in

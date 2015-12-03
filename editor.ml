@@ -58,21 +58,11 @@ let main_service =
                       (h3 [pcdata ("Welcome to the home page, where you can create you document.")]);
                       (h3 [pcdata ("Set a document name, and press \"Create\"")])])))
 
-(* let error_handler _ _ = *)
-(*   raise Eliom_common.Eliom_404 *)
-
-
 let patch_no_post_service =
-  Eliom_service.Http.service
+  Eliom_registration.Html_text.register_service
     ~path:["exchange"]
     ~get_params:Eliom_parameter.unit
-    ()
-
-let patch_service = 
-  Eliom_service.Http.post_service
-    ~fallback: patch_no_post_service
-    ~post_params:Eliom_parameter.(string "patch")
-                                   ()
+    (fun () () -> raise Eliom_common.Eliom_404)
 
 let patch_service_handler _ value = 
   let patch_json = Url.decode value in
@@ -80,11 +70,14 @@ let patch_service_handler _ value =
   let id = Eliom_reference.Volatile.get doc_id in
   let patch_out = accept_patch id patch_in in
   let patch_json = Url.encode (string_of_patch patch_out) in
-  Eliom_registration.String.send ~code:200 (patch_json, "application/json")
+  Lwt.return patch_json
+  (* Eliom_registration.String.send ~code:200 (patch_json, "application/json") *)
 
-let () = Eliom_registration.Any.register patch_service patch_service_handler; ()  
-
-
+let patch_service = 
+   Eliom_registration.Html_text.register_post_service
+    ~fallback: patch_no_post_service
+    ~post_params:Eliom_parameter.(string "patch")
+   patch_service_handler
 
 let create_doc_service =
   Eliom_registration.Html_text.register_service
@@ -143,3 +136,5 @@ let get_full_doc_service =
       | None -> Lwt.return "Empty Document"
       | Some x -> Lwt.return x)
 
+
+(* let () = Eliom_registration.Any.register_post_service patch_service patch_service_handler; () *)

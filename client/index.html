@@ -127,6 +127,7 @@ function setupListeners(editor, docid, sid, title, initialText) {
     // Get the editor session
     var session = editor.getSession();
     editor.setValue(initialText);
+    editor.$blockScrolling = Infinity;
     
     // Exchange data buffers
     var edits = [];
@@ -138,13 +139,30 @@ function setupListeners(editor, docid, sid, title, initialText) {
     });
     
     // Turn a row / column to character position
-    var coordToPos = function(p) {
+    var coordToPos = function(c) {
         var offset = 0;
-        for (var i = 0; i < p.row; i++) {
+        for (var i = 0; i < c.row; i++) {
             offset += session.getScreenLastRowColumn(i) + 1;
         }
-        offset += p.column;
+        offset += c.column;
         return offset;
+    };
+    
+    var posToCoord = function(p) {
+        var offset = p;
+        var r = 0;
+        var c = 0;
+        while (offset >= 0 && r < session.getScreenLength()) {
+            c = offset;
+            offset -= session.getScreenLastRowColumn(r) + 1;
+            if (offset >= 0) {
+                r++;
+            }
+        }
+        return {
+            column: c,
+            row: r
+        };
     };
     
     session.on("change", function(e) {
@@ -165,13 +183,26 @@ function setupListeners(editor, docid, sid, title, initialText) {
         req("POST", "/data",
             "sid=" + sid + "&data=" + encodeURIComponent(JSON.stringify(data)),
             function(e) {
-                console.log(JSON.parse(this.responseText));
+                var data = JSON.parse(this.responseText);
+                if (data.patch) {
+                    // Add patches
+                    data.patch.forEach(function (edit) {
+                        if (edit.op == "Insert") {
+                            session.insert(posToCoord(edit.pos), edit.text);
+                        }
+                        else if (edit.op == "Delete") {
+                            var start = posToCoord(edit.pos);
+                            var end = posToCoord(edit.pos + edit.text.length);
+                            session.remove(new Range(start.row, start.column, end.row, end.column));
+                        }
+                    });
+                }
             },
             function(e) {
             }
         );
         edits = [];
-    }, 5000);
+    }, 2000);
     
     DEBUG.editor = editor;
     DEBUG.session = session;

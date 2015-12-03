@@ -19,10 +19,7 @@ type client_info = {
   (* Document id that the client is editing *)
   docid : document_id;
   (* Current patch that the client is on *)
-  patch_index : int;
-  (* Current queue of patches to be sent to the client
-   * Represented as a stack for easy conversion into a list *)
-  patch_queue : patch Stack.t
+  mutable patch_index : int
 }
 
 let clients = Hashtbl.create 20
@@ -68,8 +65,7 @@ let create_session getp (docid) =
         let ci = {
           sid = sid;
           docid = docid;
-          patch_index = 0;
-          patch_queue = Stack.create ()
+          patch_index = 0
         } in
         Hashtbl.add clients sid ci;
         Lwt.return sid
@@ -93,6 +89,12 @@ let get_init getp (sid) =
       | Some x -> x
       | None -> ""
     in
+    let count =
+      match get_document_patch_count ctl ci.docid with
+      | Some x -> x
+      | None -> 0
+    in
+    ci.patch_index <- count;
     Lwt.return (Yojson.Basic.pretty_to_string
       (`Assoc [("title", `String title); ("text", `String text)]))
   else
@@ -108,30 +110,27 @@ let get_data getp (sid, data) =
       let ci = Hashtbl.find clients sid in
       (* Parse data as json *)
       let djson = from_string (decodeURIComponent data) in
-      let npatch = patch_of_json (Util.member "patch" djson) in
+      let newpatch = patch_of_json (Util.member "patch" djson) in
       
-      (* TODO Compose patches properly *)
-      let pjson =
-        let rec list_of_stack acc =
-          if Stack.is_empty ci.patch_queue then
-            acc
-          else
-            list_of_stack (
-              (`String (string_of_patch (Stack.pop ci.patch_queue)))
-              :: acc)
-        in
-        `List (list_of_stack [])
+      (* Get new patches *)
+      let plist =
+        match get_document_patches ctl ci.docid ci.patch_index with
+        | Some x -> x
+        | None -> []
       in
-      (* TODO Add patch to document storage *)
-      (* Broadcast new patch to all clients *)
-      Hashtbl.iter (fun sid info ->
-        if ci.docid = info.docid && ci.sid <> info.sid then
-          Stack.push npatch info.patch_queue
-        else
-          ()
-      ) clients;
+      (* Compose all patches together *)
+      let compatch = List.fold_left compose [] plist in
+      let retpatch, addpatch = merge newpatch compatch in
+      let _ = add_document_patches ctl ci.docid [addpatch] in
+      let patchcount =
+        match get_document_patch_count ctl ci.docid with
+        | Some x -> x
+        | None -> ci.patch_index
+      in
+      ci.patch_index <- patchcount;
       (* Return data to client *)
-      Lwt.return (pretty_to_string (`Assoc [("patches", pjson)]))
+      Lwt.return (pretty_to_string
+        (`Assoc [("patch", json_of_patch retpatch)]))
     with
       _ -> error_handler () ()
   else

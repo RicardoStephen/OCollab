@@ -78,7 +78,7 @@ let get_document_patches ctl id n =
   let idkey = "document:" ^ id in
   if exists conn idkey then
     let key = idkey ^ ":patches" in
-    Some (List.map (fun s -> patch_of_string s) (lrange conn key (-n) (-1)))
+    Some (List.map (fun s -> patch_of_string s) (lrange conn key n (-1)))
   else
     None
 
@@ -134,6 +134,7 @@ let add_document_patches ctl id patches =
   if exists conn idkey then
     (let key = idkey ^ ":text" in
     let currtext = match get conn key with Some x -> x | None -> "" in
+    let _ = Printf.printf "%s\n\n" currtext in
     let newtext = List.fold_left apply_patch currtext patches in
     set conn key newtext; true) &&
     (let key = idkey ^ ":patches" in

@@ -30,18 +30,10 @@ let doc_id =
     ~scope:Eliom_common.default_session_scope
     ""
 
-let locks = Hashtbl.create 100
-
-let acquire_doc_lock id =
-  if not (Hashtbl.mem locks id) then
-    Hashtbl.replace locks id (Mutex.create ())
-  else ();
-  Mutex.lock (Hashtbl.find locks id)
-
-let release_doc_lock id = Mutex.unlock (Hashtbl.find locks id)
+let doc_locks = Hashtbl.create 100
 
 let accept_patch id p =
-  (* acquire_doc_lock id; *)
+  Mutex.lock (Hashtbl.find doc_locks id);
   let n = Eliom_reference.Volatile.get last_patch in
   let ps = (
     match get_document_patches ctl id n with
@@ -51,7 +43,7 @@ let accept_patch id p =
   let q = List.fold_left Patch.compose Patch.empty_patch ps in
   let (q', p') = Patch.merge p q in
   let result = add_document_patches ctl id [p'] in
-  (* release_doc_lock id; *)
+  Mutex.unlock (Hashtbl.find doc_locks id);
   match result with
   | false -> err "unable to add patch to document"
   | true  ->
@@ -108,6 +100,9 @@ let access_doc_service =
     ~get_params:(string "id")
     (fun (id) () ->
       Eliom_reference.Volatile.set doc_id id;
+      if not (Hashtbl.mem doc_locks id) then
+        Hashtbl.replace doc_locks id (Mutex.create ())
+      else ();
       match get_document_patch_count ctl id with
       | None -> err ("couldn't read document patch count for " ^ id)
       | Some n -> Eliom_reference.Volatile.set last_patch n;

@@ -11,3 +11,4 @@ gui_test.js
 test_patch
 test_storage
 static/gui.js
+static/create_doc.js

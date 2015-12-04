@@ -5,7 +5,6 @@ let docid    = Js.Unsafe.js_expr "window.doc_id"
 let title    = Js.Unsafe.js_expr "window.doc_title"
 let fulltext = Js.Unsafe.js_expr "window.doc_text"
 
-let set_full_doc cm = cm##setValue(fulltext)
 
 let cur_patch = ref empty_patch
 
@@ -48,7 +47,7 @@ let rec send_to_server cm () : unit =
     | _ -> ();
   in
   req##onreadystatechange <- Js.wrap_callback handler;
-  req##_open(Js.string "POST", Js.string "/exchange", Js._false);
+  req##_open(Js.string "POST", Js.string "/exchange", Js._true);
   req##setRequestHeader(
     Js.string "Content-type",
     Js.string "application/x-www-form-urlencoded");
@@ -58,7 +57,6 @@ let rec send_to_server cm () : unit =
 and start_reqs cm =
   Dom_html.window##setTimeout(Js.wrap_callback (send_to_server cm), 1000.0)
 
-(* Useful for testing *)         
 let handle_change cm x =
   if Js.to_string (Js.Unsafe.get x "origin") <> "self" then
     cur_patch := compose !cur_patch (patch_of_change cm x)
@@ -66,13 +64,10 @@ let handle_change cm x =
   Js._false
 
 let start _ =
-  let body = Js.Unsafe.inject Html.window##document##body in
-  let cm = Js.Unsafe.meth_call Js.Unsafe.global "CodeMirror" (Array.make 1 body) in
-  let _ = set_full_doc cm in
-  let f = Js.Unsafe.inject handle_change in
-  let e = Js.Unsafe.inject (Js.string "beforeChange") in
-  let _ = cm##on(e, f) in
-  let _ = start_reqs cm in
+  let cm = Js.Unsafe.js_expr "CodeMirror(document.body)" in
+  cm##setValue(fulltext);
+  cm##on(Js.string "beforeChange", Js.Unsafe.inject handle_change);
+  start_reqs cm;
   Js._false
 
 let _ = Html.window##onload <- Html.handler start

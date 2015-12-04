@@ -41,7 +41,7 @@ let acquire_doc_lock id =
 let release_doc_lock id = Mutex.unlock (Hashtbl.find locks id)
 
 let accept_patch id p =
-  (* let _ = acquire_doc_lock id in *)
+  (* acquire_doc_lock id; *)
   let n = Eliom_reference.Volatile.get last_patch in
   let ps = (
     match get_document_patches ctl id n with
@@ -51,14 +51,13 @@ let accept_patch id p =
   let q = List.fold_left Patch.compose Patch.empty_patch ps in
   let (q', p') = Patch.merge p q in
   let result = add_document_patches ctl id [p'] in
-  (* let _ = release_doc_lock id in *)
+  (* release_doc_lock id; *)
   match result with
   | false -> err "unable to add patch to document"
   | true  ->
     match get_document_patch_count ctl id with
     | None -> err "unable to read document patch count"
-    | Some last -> 
-      let _ = Eliom_reference.Volatile.set last_patch last in q'
+    | Some last -> Eliom_reference.Volatile.set last_patch last; q'
 
 let main_service =
   Eliom_registration.Html5.register_service
@@ -79,15 +78,10 @@ let patch_no_post_service =
     ~get_params:Eliom_parameter.unit
     (fun () () -> raise Eliom_common.Eliom_404)
 
-let patch_service_handler _ value = 
-  let patch_json = Url.decode value in
-  let patch_in = patch_of_string patch_json in
+let patch_service_handler _ value =
+  let patch_in = patch_of_string (Url.decode value) in
   let id = Eliom_reference.Volatile.get doc_id in
-  Printf.printf "%s\n" id;
-  let patch_out = accept_patch id patch_in in
-  let patch_json = string_of_patch patch_out in
-  Lwt.return patch_json
-  (* Eliom_registration.String.send ~code:200 (patch_json, "application/json") *)
+  Lwt.return (string_of_patch (accept_patch id patch_in))
 
 let patch_service = 
    Eliom_registration.Html_text.register_post_service
@@ -114,6 +108,9 @@ let access_doc_service =
     ~get_params:(string "id")
     (fun (id) () ->
       Eliom_reference.Volatile.set doc_id id;
+      match get_document_patch_count ctl id with
+      | None -> err ("couldn't read document patch count for " ^ id)
+      | Some n -> Eliom_reference.Volatile.set last_patch n;
       match get_document_metadata ctl id with
       | None -> Lwt.return Eliom_content.Html5.D.(
         html

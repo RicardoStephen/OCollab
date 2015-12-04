@@ -10,6 +10,8 @@ open Patch
 
 (* TODO better handle error cases *)
 
+let () = Ocsigen_config.set_maxrequestbodysizeinmemory 1048576
+
 let err s = print_string (s ^ "\n"); failwith s
 
 let ctl =

@@ -10,10 +10,12 @@ open Patch
 
 (* TODO better handle error cases *)
 
+let err s = print_string (s ^ "\n"); failwith s
+
 let ctl =
   match storage_open "127.0.0.1" 6379 with
   | Some x -> x
-  | None -> failwith "Failed to connect to Redis"
+  | None -> err "Failed to connect to Redis"
 
 let create_document getp postp =
   match document_create ctl with
@@ -21,11 +23,11 @@ let create_document getp postp =
   | None -> Lwt.return ""
 
 let last_patch =
-  Eliom_reference.Volatile.eref ~scope:Eliom_common.default_process_scope (-1)
+  Eliom_reference.Volatile.eref ~scope:Eliom_common.default_session_scope (-1)
 
 let doc_id =
   Eliom_reference.Volatile.eref
-    ~scope:Eliom_common.default_process_scope
+    ~scope:Eliom_common.default_session_scope
     ""
 
 let locks = Hashtbl.create 100
@@ -39,22 +41,22 @@ let acquire_doc_lock id =
 let release_doc_lock id = Mutex.unlock (Hashtbl.find locks id)
 
 let accept_patch id p =
-  let _ = acquire_doc_lock id in
+  (* let _ = acquire_doc_lock id in *)
   let n = Eliom_reference.Volatile.get last_patch in
   let ps = (
     match get_document_patches ctl id n with
-    | None -> failwith "unable to read document patches"
+    | None -> err "unable to read document patches"
     | Some ps -> ps)
   in
   let q = List.fold_left Patch.compose Patch.empty_patch ps in
   let (q', p') = Patch.merge p q in
   let result = add_document_patches ctl id [p'] in
-  let _ = release_doc_lock id in
+  (* let _ = release_doc_lock id in *)
   match result with
-  | false -> failwith "unable to add patch to document"
+  | false -> err "unable to add patch to document"
   | true  ->
     match get_document_patch_count ctl id with
-    | None -> failwith "unable to read document patch count"
+    | None -> err "unable to read document patch count"
     | Some last -> 
       let _ = Eliom_reference.Volatile.set last_patch last in q'
 
@@ -81,6 +83,7 @@ let patch_service_handler _ value =
   let patch_json = Url.decode value in
   let patch_in = patch_of_string patch_json in
   let id = Eliom_reference.Volatile.get doc_id in
+  Printf.printf "%s\n" id;
   let patch_out = accept_patch id patch_in in
   let patch_json = Url.encode (string_of_patch patch_out) in
   Lwt.return patch_json
@@ -102,7 +105,7 @@ let create_doc_service =
        | None -> Lwt.return "" (* TODO better way to handle *)
        | Some newid -> 
           match set_document_metadata ctl newid {title} with
-          | false -> failwith "Could not set document metadata"
+          | false -> err "Could not set document metadata"
           | true -> Lwt.return newid)
 
 let access_doc_service = 
@@ -124,10 +127,10 @@ let access_doc_service =
         in
         let script = Printf.sprintf
           "var doc_id = \'%s\';\n\
-           var doc_text = \'%s\';\n\
+           var doc_text = %s;\n\
            var doc_title = \'%s\'\n\
            console.log([doc_id, doc_text, doc_title]);\n"
-          id text x.title
+          id (Yojson.to_string (`String text)) x.title
         in
         let script_node = Eliom_content.Html5.F.script (cdata_script script) in
         Lwt.return Eliom_content.Html5.D.(

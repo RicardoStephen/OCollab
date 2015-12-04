@@ -134,12 +134,13 @@ let add_document_patches ctl id patches =
   if exists conn idkey then
     (let key = idkey ^ ":text" in
     let currtext = match get conn key with Some x -> x | None -> "" in
-    let _ = Printf.printf "%s\n\n" currtext in
     let newtext = List.fold_left apply_patch currtext patches in
     set conn key newtext; true) &&
     (let key = idkey ^ ":patches" in
     List.fold_left (fun r p ->
-      r && (rpush conn key (string_of_patch p)) > 0) true patches)
+      if List.length p <> 0 then
+        r && (rpush conn key (string_of_patch p)) > 0
+      else true) true patches)
   else
     false
 

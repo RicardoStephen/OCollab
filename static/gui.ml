@@ -38,8 +38,12 @@ let apply_patch_cm cm p =
 let rec send_to_server cm () : unit =
   let req = XmlHttpRequest.create () in
   let patch_string = Js.string (string_of_patch !cur_patch) in
+  cur_patch := empty_patch;
   let args = (Js.string "patch=")##concat(Js.encodeURIComponent patch_string) in
   req##_open(Js.string "POST", Js.string "/exchange", Js._true);
+  req##setRequestHeader(
+    Js.string "Content-type",
+    Js.string "application/x-www-form-urlencoded");
   req##send(Js.some args);
   match (req##readyState, req##status) with
   | (XmlHttpRequest.DONE, 200) ->
@@ -48,12 +52,11 @@ let rec send_to_server cm () : unit =
   let _ = start_reqs cm in
   ()
 and start_reqs cm =
-  Dom_html.window##setTimeout(Js.wrap_callback (send_to_server cm), 1.0)
+  Dom_html.window##setTimeout(Js.wrap_callback (send_to_server cm), 1000.0)
 
 (* Useful for testing *)         
 let handle_change cm x =
   cur_patch := compose !cur_patch (patch_of_change cm x);
-  let _ = Js.Unsafe.global##console##log(Js.string (string_of_patch !cur_patch)) in
   Js._false
 
 let start _ =
@@ -63,6 +66,7 @@ let start _ =
   let f = Js.Unsafe.inject handle_change in
   let e = Js.Unsafe.inject (Js.string "beforeChange") in
   let _ = cm##on(e, f) in
+  let _ = start_reqs cm in
   Js._false
 
 let _ = Html.window##onload <- Html.handler start

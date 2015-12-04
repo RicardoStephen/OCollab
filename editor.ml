@@ -60,10 +60,10 @@ let main_service =
       (head
         (title (pcdata "Collaborative Document Editor"))
         [js_script ~uri:(make_uri ~service:(static_dir ()) ["create_doc.js"]) ()])
-        (body
-          [(h1 [pcdata ("Home")]);
-          (h3 [pcdata ("Welcome to the home page, where you can create you document.")]);
-          (h3 [pcdata ("Set a document name, and press \"Create\"")])])))
+      (body
+        [(h1 [pcdata ("Home")]);
+        (h3 [pcdata ("Welcome to the home page, where you can create you document.")]);
+        (h3 [pcdata ("Set a document name, and press \"Create\"")])])))
 
 let patch_no_post_service =
   Eliom_registration.Html_text.register_service

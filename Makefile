@@ -37,7 +37,7 @@ gui.js: static/gui.ml patch.cmo
 
 gui_test.js: gui_test.ml
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o gui_test.o gui_test.ml
-	js_of_ocaml gui_test.o
+	js_of_ocaml -opt 3 gui_test.o
 
 eliom_test: 
 	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o eliom_test/static/gui_js.byte eliom_test/gui_js.ml

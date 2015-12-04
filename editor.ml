@@ -51,20 +51,6 @@ let accept_patch id p =
     | None -> err "unable to read document patch count"
     | Some last -> Eliom_reference.Volatile.set last_patch last; q'
 
-let main_service =
-  Eliom_registration.Html5.register_service
-    ~path:[]
-    ~get_params:unit
-    (fun () () -> Lwt.return Eliom_content.Html5.D.(
-      html
-      (head
-        (title (pcdata "Collaborative Document Editor"))
-        [js_script ~uri:(make_uri ~service:(static_dir ()) ["create_doc.js"]) ()])
-      (body
-        [(h1 [pcdata ("Home")]);
-        (h3 [pcdata ("Welcome to the home page, where you can create you document.")]);
-        (h3 [pcdata ("Set a document name, and press \"Create\"")])])))
-
 let patch_no_post_service =
   Eliom_registration.Html_text.register_service
     ~path:["exchange"]
@@ -83,7 +69,8 @@ let patch_service =
    patch_service_handler
 
 let create_doc_service =
-  Eliom_registration.Html_text.register_service
+  Eliom_registration.String_redirection.register_service
+    ~options:`TemporaryRedirect
     ~path:["create_doc"]
     ~get_params:(string "title")
     (fun (title) () ->
@@ -93,7 +80,7 @@ let create_doc_service =
        | Some newid -> 
           match set_document_metadata ctl newid {title} with
           | false -> err "Could not set document metadata"
-          | true -> Lwt.return newid)
+          | true -> Lwt.return ("doc?id=" ^ newid))
 
 let access_doc_service = 
   Eliom_registration.Html5.register_service
@@ -144,3 +131,22 @@ let get_full_doc_service =
       match get_document_text ctl id with
       | None -> Lwt.return "Empty Document"
       | Some x -> Lwt.return x)
+
+let main_service =
+  Eliom_registration.Html5.register_service
+    ~path:[]
+    ~get_params:unit
+    (fun () () ->
+      Lwt.return Eliom_content.Html5.D.(
+        html ( head (title (pcdata "Collaborative Document Editor")) [] )
+        (body [
+          (h1 [pcdata ("Home")]);
+          (h3 [pcdata ("Welcome to the home page, where you can create you document.")]);
+          (h3 [pcdata ("Set a document name, and press \"Create\"")]);
+          (get_form create_doc_service (fun _ -> [
+            raw_input ~input_type:`Text ~name:"title" ();
+            raw_input ~input_type:`Submit ~value:"Create" ()
+          ]))  
+        ])
+      )
+    )

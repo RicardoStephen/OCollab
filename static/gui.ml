@@ -4,6 +4,7 @@ open Patch
 let docid    = Js.Unsafe.js_expr "window.doc_id"
 let title    = Js.Unsafe.js_expr "window.doc_title"
 let fulltext = Js.Unsafe.js_expr "window.doc_text"
+let sid      = Js.Unsafe.js_expr "window.sid"
 
 let cur_patch = ref empty_patch
 
@@ -36,7 +37,9 @@ let apply_patch_cm cm p =
 let rec send_to_server cm patch () : unit =
   let req = XmlHttpRequest.create () in
   let patch_string = Js.string (string_of_patch patch) in
-  let args = (Js.string "patch=")##concat(Js.encodeURIComponent patch_string) in
+  let args =
+    ((Js.string "sid=")##concat(sid))##concat(
+    (Js.string "&patch=")##concat(Js.encodeURIComponent patch_string)) in
   let handler _ =
     match (req##readyState, req##status) with
     | (XmlHttpRequest.DONE, 200) ->

@@ -85,7 +85,7 @@ let patch_service_handler _ value =
   let id = Eliom_reference.Volatile.get doc_id in
   Printf.printf "%s\n" id;
   let patch_out = accept_patch id patch_in in
-  let patch_json = Url.encode (string_of_patch patch_out) in
+  let patch_json = string_of_patch patch_out in
   Lwt.return patch_json
   (* Eliom_registration.String.send ~code:200 (patch_json, "application/json") *)
 

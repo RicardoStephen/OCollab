@@ -24,14 +24,15 @@ let patch_of_change cm obj =
   compose del ins
 
 let apply_patch_cm cm p =
+  (* let _ = Js.Unsafe.global##console##log(Js.string (string_of_patch p)) in *)
   let apply_edit_cm e =
     let st = cm##posFromIndex(jsnum_of_int e.pos) in
     match e.op with
     | Insert ->
-      let _ = cm##replaceRange(Js.string e.text, st, st) in ()
+      let _ = cm##replaceRange(Js.string e.text, st, st, Js.string "self") in ()
     | Delete ->
       let en = cm##posFromIndex(jsnum_of_int (e.pos + (String.length e.text))) in
-      let _ = cm##replaceRange(Js.string "", st, en) in ()
+      let _ = cm##replaceRange(Js.string "", st, en, Js.string "self") in ()
   in
   List.iter apply_edit_cm p
 
@@ -40,15 +41,18 @@ let rec send_to_server cm () : unit =
   let patch_string = Js.string (string_of_patch !cur_patch) in
   cur_patch := empty_patch;
   let args = (Js.string "patch=")##concat(Js.encodeURIComponent patch_string) in
-  req##_open(Js.string "POST", Js.string "/exchange", Js._true);
+  let handler _ =
+    match (req##readyState, req##status) with
+    | (XmlHttpRequest.DONE, 200) ->
+      apply_patch_cm cm (patch_of_string (Js.to_string req##responseText))
+    | _ -> ();
+  in
+  req##onreadystatechange <- Js.wrap_callback handler;
+  req##_open(Js.string "POST", Js.string "/exchange", Js._false);
   req##setRequestHeader(
     Js.string "Content-type",
     Js.string "application/x-www-form-urlencoded");
   req##send(Js.some args);
-  match (req##readyState, req##status) with
-  | (XmlHttpRequest.DONE, 200) ->
-    apply_patch_cm cm (patch_of_string (Js.to_string req##responseText))
-  | _ -> ();
   let _ = start_reqs cm in
   ()
 and start_reqs cm =
@@ -56,7 +60,9 @@ and start_reqs cm =
 
 (* Useful for testing *)         
 let handle_change cm x =
-  cur_patch := compose !cur_patch (patch_of_change cm x);
+  if Js.to_string (Js.Unsafe.get x "origin") <> "self" then
+    cur_patch := compose !cur_patch (patch_of_change cm x)
+  else ();
   Js._false
 
 let start _ =

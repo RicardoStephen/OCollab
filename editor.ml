@@ -10,6 +10,8 @@ open Patch
 
 (* TODO better handle error cases *)
 
+let () = Ocsigen_config.set_maxrequestbodysizeinmemory 1048576
+
 let err s = print_string (s ^ "\n"); failwith s
 
 let ctl =
@@ -25,13 +27,12 @@ let create_document getp postp =
 type client_info = {
   sid : string;
   doc_id : string;
-  mutable pos: ((int * int) * (int * int));
-  color: int;
   mutable last_patch : int;
+  mutable pos: ((int * int) * (int * int));
+  color: int
 }
 
 let clients = Hashtbl.create 100
-
 let create_session doc_id =
   let rec try_create count =
     if count = 0 then err "could not generate a session id"

@@ -12,18 +12,16 @@ TEST_PKGS=pa_ounit,yojson,redis
 
 TEST_LIBS=storage.cmx document.cmx serializer.cmx assertions.cmx
 
-.PHONY: all eliom_test server
+.PHONY: all compile test run install
 
 .PRECIOUS: %.cmi %.cmo %.cmx %.o
 
-all: run
+all: compile
+	@-mkdir -p server/log
+	@-mkdir -p server/data
+	ocsigenserver -c editor.conf
 
-compile: patch.cmo document.cmo storage.cmo editor.cmo
-
-server:
-	$(MAKE) gui.js
-	$(MAKE) clean
-	$(MAKE) run
+compile: patch.cmo document.cmo storage.cmo editor.cmo gui.js
 
 gui.js: static/gui.ml patch.cmo
 	ocamlfind ocamlc -package js_of_ocaml,yojson -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o patch.cmo static/gui.ml
@@ -45,11 +43,6 @@ test: compile test_patch test_storage
 	./test_patch inline-test-runner dummy -log -verbose
 	./test_storage inline-test-runner dummy -log -verbose
 
-run: compile
-	@-mkdir -p server/log
-	@-mkdir -p server/data
-	ocsigenserver -c editor.conf
-
 clean:
 	@-rm -r _build
 	@-rm -r _cs3110
@@ -57,12 +50,19 @@ clean:
 	@-rm *.cmo
 	@-rm *.cmx
 	@-rm *.o
+	@-rm ./static/*.cmi
+	@-rm ./static/*.cmo
+	@-rm ./static/*.cmx
+	@-rm ./static/*.o
+	@-rm ./static/*.js
+	@-rm test_patch
 	@-rm test_patch
 	@-rm test_storage
 
 install:
 	opam install -y yojson
 	opam install -y js_of_ocaml
+	opam install -y depext
 	opam depext dbm.1.0
 	opam install -y eliom
 	sudo apt-get install -y redis-server

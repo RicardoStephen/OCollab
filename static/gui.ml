@@ -122,6 +122,10 @@ let rec send_to_server cm patch () : unit =
       ignore (Dom_html.window##setTimeout(
         Js.wrap_callback (send_to_server cm q'), 500.0));
       ()
+    | (XmlHttpRequest.Done, 500) ->
+      let_ = Dom_html.window##alert(
+        Js.string "An error occurred. Please reload the page and try again.") in
+      ()
     | _ -> ()
   in
   req##onreadystatechange <- Js.wrap_callback handler;

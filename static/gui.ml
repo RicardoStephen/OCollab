@@ -34,6 +34,64 @@ let apply_patch_cm cm p =
   in
   cm##operation(Js.Unsafe.inject (fun _ -> List.iter apply_edit_cm p))
 
+let show_cursors_cm cm cursors =
+  let open Yojson.Basic in
+  let last_line = Js.to_string (Js.string (cm##lineCount())) in
+  List.iter (fun c -> (
+    match Util.to_list c with
+    | jhue::jcsl::jcsc::jcel::jcec::[] ->
+      let hue = Util.to_int jhue in
+      let csl = Util.to_int jcsl in
+      let csc = Util.to_int jcsc in
+      let cel = Util.to_int jcel in
+      let cec = Util.to_int jcec in
+      let color = "hsl(" ^ (string_of_int hue) ^ ", 100%, 50%)" in
+      cm##markText(
+        Json.unsafe_input (Js.string ("{\"line\":0, \"ch\":0}")),
+        Json.unsafe_input (Js.string ("{\"line\":"
+          ^ last_line ^ ", \"ch\":0}")),
+        Json.unsafe_input (Js.string
+          ("{\"css\":\"background-color: transparent;" ^
+          "border: none; margin: 0px\"}")));
+      if csl = cel && csc = cec then
+        (* Show a single cursor line *)
+        if csc = 0 then
+          (* Special case: cursor is first, line on left *)
+          cm##markText(
+            Json.unsafe_input (Js.string
+              ("{\"line\":" ^ (string_of_int csl) ^
+              ", \"ch\":" ^ (string_of_int csc) ^ "}")),
+            Json.unsafe_input (Js.string
+              ("{\"line\":" ^ (string_of_int cel) ^
+              ", \"ch\":" ^ (string_of_int (cec + 1)) ^ "}")),
+            Json.unsafe_input (Js.string
+              ("{\"css\":\"border-left: 2px solid " ^ color ^ ";" ^
+              "margin-left: -2px\"}")))
+        else
+          (* Common case: line on right *)
+          cm##markText(
+            Json.unsafe_input (Js.string
+              ("{\"line\":" ^ (string_of_int csl) ^
+              ", \"ch\":" ^ (string_of_int (csc - 1)) ^ "}")),
+            Json.unsafe_input (Js.string
+              ("{\"line\":" ^ (string_of_int cel) ^
+              ", \"ch\":" ^ (string_of_int cec) ^ "}")),
+            Json.unsafe_input (Js.string
+              ("{\"css\":\"border-right: 2px solid " ^ color ^ ";" ^
+              "margin-right: -2px\"}")))
+      else
+        (* Mark an entire range *)
+        cm##markText(
+          Json.unsafe_input (Js.string
+            ("{\"line\":" ^ (string_of_int csl) ^
+            ", \"ch\":" ^ (string_of_int csc) ^ "}")),
+          Json.unsafe_input (Js.string
+            ("{\"line\":" ^ (string_of_int cel) ^
+            ", \"ch\":" ^ (string_of_int cec) ^ "}")),
+          Json.unsafe_input (Js.string
+            ("{\"css\":\"background-color: " ^ color ^ "\"}")))
+    | _ -> ())) cursors
+
 let rec send_to_server cm patch () : unit =
   let req = XmlHttpRequest.create () in
   let patch_string = Js.string (string_of_patch patch) in
@@ -59,62 +117,8 @@ let rec send_to_server cm patch () : unit =
       let (q', p') = merge p q in
 
       let cursors = Util.to_list (Util.member "cursors" resp) in
-      let last_line = Js.to_string (Js.string (cm##lineCount())) in
       apply_patch_cm cm p';
-      List.iter (fun c -> (
-        match Util.to_list c with
-        | jhue::jcsl::jcsc::jcel::jcec::[] ->
-          let hue = Util.to_int jhue in
-          let csl = Util.to_int jcsl in
-          let csc = Util.to_int jcsc in
-          let cel = Util.to_int jcel in
-          let cec = Util.to_int jcec in
-          let color = "hsl(" ^ (string_of_int hue) ^ ", 100%, 50%)" in
-          cm##markText(
-            Json.unsafe_input (Js.string ("{\"line\":0, \"ch\":0}")),
-            Json.unsafe_input (Js.string ("{\"line\":"
-              ^ last_line ^ ", \"ch\":0}")),
-            Json.unsafe_input (Js.string
-              ("{\"css\":\"background-color: transparent;" ^
-              "border: none; margin: 0px\"}")));
-          if csl = cel && csc = cec then
-            (* Show a single cursor line *)
-            if csc = 0 then
-              (* Special case: cursor is first, line on left *)
-              cm##markText(
-                Json.unsafe_input (Js.string
-                  ("{\"line\":" ^ (string_of_int csl) ^
-                  ", \"ch\":" ^ (string_of_int csc) ^ "}")),
-                Json.unsafe_input (Js.string
-                  ("{\"line\":" ^ (string_of_int cel) ^
-                  ", \"ch\":" ^ (string_of_int (cec + 1)) ^ "}")),
-                Json.unsafe_input (Js.string
-                  ("{\"css\":\"border-left: 2px solid " ^ color ^ ";" ^
-                  "margin-left: -2px\"}")))
-            else
-              (* Common case: line on right *)
-              cm##markText(
-                Json.unsafe_input (Js.string
-                  ("{\"line\":" ^ (string_of_int csl) ^
-                  ", \"ch\":" ^ (string_of_int (csc - 1)) ^ "}")),
-                Json.unsafe_input (Js.string
-                  ("{\"line\":" ^ (string_of_int cel) ^
-                  ", \"ch\":" ^ (string_of_int cec) ^ "}")),
-                Json.unsafe_input (Js.string
-                  ("{\"css\":\"border-right: 2px solid " ^ color ^ ";" ^
-                  "margin-right: -2px\"}")))
-          else
-            (* Mark an entire range *)
-            cm##markText(
-              Json.unsafe_input (Js.string
-                ("{\"line\":" ^ (string_of_int csl) ^
-                ", \"ch\":" ^ (string_of_int csc) ^ "}")),
-              Json.unsafe_input (Js.string
-                ("{\"line\":" ^ (string_of_int cel) ^
-                ", \"ch\":" ^ (string_of_int cec) ^ "}")),
-              Json.unsafe_input (Js.string
-                ("{\"css\":\"background-color: " ^ color ^ "\"}")))
-        | _ -> ())) cursors;
+      show_cursors_cm cm cursors;
       ignore (Dom_html.window##setTimeout(
         Js.wrap_callback (send_to_server cm q'), 500.0));
       ()

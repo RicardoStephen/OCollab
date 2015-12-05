@@ -59,18 +59,22 @@ let merge p1 p2 =
         if b > a then
           ([{e2 with pos = e2.pos - len1}], [e1])
         else
-          (nonempty {e2 with pos = e1.pos; text = slice e2.text (a - e2.pos) len2},
+          (nonempty { e2 with
+                      pos = e1.pos;
+                      text = slice e2.text (a - e2.pos) len2},
           compose
-            (nonempty {e1 with text = slice e1.text 0 (b - e1.pos)})
-            (nonempty {e1 with text = slice e1.text (a - e1.pos) len1}))
+            (nonempty { e1 with text = slice e1.text 0 (b - e1.pos)})
+            (nonempty { e1 with text = slice e1.text (a - e1.pos) len1}))
       | (Delete, Insert) ->
         if end1 <= e2.pos then
           ([{e2 with pos = e2.pos - len1}], [e1])
         else
           ([{e2 with pos = e1.pos}],
           compose
-            (nonempty {e1 with text = slice e1.text 0 (e2.pos - e1.pos)})
-            (nonempty {e1 with pos = e1.pos + len2; text = slice e1.text (e2.pos - e1.pos) len1}))
+            (nonempty { e1 with text = slice e1.text 0 (e2.pos - e1.pos)})
+            (nonempty { e1 with
+                        pos = e1.pos + len2;
+                        text = slice e1.text (e2.pos - e1.pos) len1}))
   in
   let rec go p1 p2 =
     match (p1, p2) with
@@ -97,7 +101,10 @@ let apply_patch doc p =
     let before = String.sub doc 0 e.pos in
     match e.op with
     | Insert -> before ^ e.text ^ (String.sub doc e.pos (len - e.pos))
-    | Delete -> before ^ (String.sub doc (e.pos + String.length e.text) (len - e.pos - (String.length e.text)))
+    | Delete ->
+      let start_index = e.pos + String.length e.text in
+      let end_index = len - e.pos - (String.length e.text) in
+      before ^ (String.sub doc  start_index end_index)
   in
   List.fold_left apply_edit doc p
 

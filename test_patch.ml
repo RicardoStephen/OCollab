@@ -7,7 +7,7 @@ let rec repeat n f =
 
 let random_text n =
   let random_char () = Char.escaped (Char.chr (65 + (Random.int 26))) in
-  let rec go s n = 
+  let rec go s n =
     if n = 0 then s
     else go (s ^ (random_char ())) (n - 1)
   in
@@ -42,17 +42,6 @@ let rec random_edits n doc =
 let random_patch max_size doc =
   let num_edits = Random.int max_size in
   random_edits num_edits doc
-
-(*
-TEST_UNIT =
-  repeat 100 (fun _ ->
-    let doc_size = 10 in
-    let doc_text = random_text doc_size in
-    let (p, s) = random_patch 50 doc_text in
-    let _ =  Printf.printf "%s\n%s\n%s\n\n" doc_text (string_of_patch p) s in
-    (apply_patch doc_text p) === s
-  )
-*)
 
 (* Empty patch does not change the document's text *)
 TEST_UNIT =
@@ -89,9 +78,9 @@ TEST_UNIT =
   )
 
 
-(* Applying patch composed with another patch to an empty document is the same as
- * applying the second patch to the empty document and then applying the first
- * patch. *)
+(* Applying patch composed with another patch to an empty document is the same
+ * as applying the second patch to the empty document and then applying the
+ * first patch. *)
 TEST_UNIT =
   repeat 1000 (fun _ ->
   let (edit_list, s1) = random_patch 50 empty_doc in

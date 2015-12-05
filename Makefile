@@ -56,7 +56,6 @@ clean:
 	@-rm ./static/*.o
 	@-rm ./static/*.js
 	@-rm test_patch
-	@-rm test_patch
 	@-rm test_storage
 
 install:

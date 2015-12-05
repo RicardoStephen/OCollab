@@ -21,7 +21,6 @@ all: run
 compile: patch.cmo document.cmo storage.cmo editor.cmo
 
 server:
-	$(MAKE) create_doc.js
 	$(MAKE) gui.js
 	$(MAKE) clean
 	$(MAKE) run

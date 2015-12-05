@@ -49,6 +49,8 @@ let create_session doc_id =
         session
   in try_create 100
 
+let destroy_session sid = Hashtbl.remove clients sid
+
 let doc_locks = Hashtbl.create 100
 
 let accept_patch id session p =
@@ -156,14 +158,11 @@ let access_doc_service =
               js_script ~uri:(genuri ["gui.js"]) ()])
             (body [h1 [pcdata ("Title: "^x.title)]])))
 
-let get_full_doc_service =
+let close_service =
   Eliom_registration.Html_text.register_service
-    ~path:["get_doc_text"]
-    ~get_params:(string "id")
-    (fun (id) () ->
-      match get_document_text ctl id with
-      | None -> Lwt.return "Empty Document"
-      | Some x -> Lwt.return x)
+    ~path:["close"]
+    ~get_params:(string "sid")
+    (fun id () -> destroy_session sid)
 
 let main_service =
   Eliom_registration.Html5.register_service

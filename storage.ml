@@ -5,35 +5,26 @@
 open Patch
 open Document
 open Redis
+open Redis_sync.Client
 
 type controller = {
-    addr: string;
-    port: int;
-    conn: Redis_sync.Client.connection
-  }
+  addr: string;
+  port: int;
+  conn: connection
+}
 
 let storage_open addr port =
-  let open Redis_sync.Client in
   try
     let c = connect { host = addr; port = port } in
     Some { addr = addr; port = port; conn = c }
   with _ -> None
 
-let storage_close ctl =
-  let open Redis_sync.Client in
-  let conn = ctl.conn in
-  quit conn
+let storage_close ctl = quit ctl.conn
 
 let storage_flush ctl b =
-  let open Redis_sync.Client in
-  let conn = ctl.conn in
-  if b then
-    flushdb conn
-  else
-    ()
+  if b then flushdb ctl.conn else ()
 
 let document_create ctl =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let rec try_create count =
     if count = 0 then
@@ -56,12 +47,9 @@ let document_create ctl =
   try_create 100
 
 let get_document_list ctl =
-  let open Redis_sync.Client in
-  let conn = ctl.conn in
-  smembers conn "documents"
+  smembers ctl.conn "documents"
 
 let get_document_metadata ctl id =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -73,7 +61,6 @@ let get_document_metadata ctl id =
     None
 
 let get_document_patches ctl id n =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -83,7 +70,6 @@ let get_document_patches ctl id n =
     None
 
 let get_document_patch_count ctl id =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -93,7 +79,6 @@ let get_document_patch_count ctl id =
     None
 
 let get_document_text ctl id =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -103,7 +88,6 @@ let get_document_text ctl id =
     None
 
 let get_document ctl id =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -118,7 +102,6 @@ let get_document ctl id =
     None
 
 let set_document_metadata ctl id data =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -128,7 +111,6 @@ let set_document_metadata ctl id data =
     false
 
 let add_document_patches ctl id patches =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -145,7 +127,6 @@ let add_document_patches ctl id patches =
     false
 
 let set_document_patches ctl id patches =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -156,7 +137,6 @@ let set_document_patches ctl id patches =
     false
 
 let set_document_text ctl id text =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   let idkey = "document:" ^ id in
   if exists conn idkey then
@@ -166,7 +146,6 @@ let set_document_text ctl id text =
     false
 
 let set_document ctl id doc =
-  let open Redis_sync.Client in
   let conn = ctl.conn in
   if exists conn ("document:" ^ id) then
     let key = "document:" ^ doc.id in
@@ -175,3 +154,4 @@ let set_document ctl id doc =
     (set_document_patches ctl doc.id doc.patches)
   else
     false
+

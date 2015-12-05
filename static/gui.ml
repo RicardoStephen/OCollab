@@ -35,12 +35,12 @@ let apply_patch_cm cm p =
       let _ = cm##replaceRange
         (Js.string "", st, en, Js.string "self") in ()
   in
-  cm##operation(Js.Unsafe.inject (fun _ -> List.iter apply_edit_cm p))
+  List.iter apply_edit_cm p
 
 let show_cursors_cm cm cursors =
   let open Yojson.Basic in
   let last_line = Js.to_string (Js.string (cm##lineCount())) in
-  List.iter (fun c -> (
+  List.fold_left (fun acc c -> (
     match Util.to_list c with
     | jhue::jcsl::jcsc::jcel::jcec::[] ->
       let hue = Util.to_int jhue in
@@ -49,6 +49,7 @@ let show_cursors_cm cm cursors =
       let cel = Util.to_int jcel in
       let cec = Util.to_int jcec in
       let color = "hsl(" ^ (string_of_int hue) ^ ", 100%, 50%)" in
+      (*
       cm##markText(
         Json.unsafe_input (Js.string ("{\"line\":0, \"ch\":0}")),
         Json.unsafe_input (Js.string ("{\"line\":"
@@ -56,11 +57,12 @@ let show_cursors_cm cm cursors =
         Json.unsafe_input (Js.string
           ("{\"css\":\"background-color: transparent;" ^
           "border: none; margin: 0px\"}")));
+      *)
       if csl = cel && csc = cec then
         (* Show a single cursor line *)
         if csc = 0 then
           (* Special case: cursor is first, line on left *)
-          cm##markText(
+          (cm##markText(
             Json.unsafe_input (Js.string
               ("{\"line\":" ^ (string_of_int csl) ^
               ", \"ch\":" ^ (string_of_int csc) ^ "}")),
@@ -69,10 +71,10 @@ let show_cursors_cm cm cursors =
               ", \"ch\":" ^ (string_of_int (cec + 1)) ^ "}")),
             Json.unsafe_input (Js.string
               ("{\"css\":\"border-left: 2px solid " ^ color ^ ";" ^
-              "margin-left: -2px\"}")))
+              "margin-left: -2px\"}")))) :: acc
         else
           (* Common case: line on right *)
-          cm##markText(
+          (cm##markText(
             Json.unsafe_input (Js.string
               ("{\"line\":" ^ (string_of_int csl) ^
               ", \"ch\":" ^ (string_of_int (csc - 1)) ^ "}")),
@@ -81,10 +83,10 @@ let show_cursors_cm cm cursors =
               ", \"ch\":" ^ (string_of_int cec) ^ "}")),
             Json.unsafe_input (Js.string
               ("{\"css\":\"border-right: 2px solid " ^ color ^ ";" ^
-              "margin-right: -2px\"}")))
+              "margin-right: -2px\"}")))) :: acc
       else
         (* Mark an entire range *)
-        cm##markText(
+        (cm##markText(
           Json.unsafe_input (Js.string
             ("{\"line\":" ^ (string_of_int csl) ^
             ", \"ch\":" ^ (string_of_int csc) ^ "}")),
@@ -92,10 +94,10 @@ let show_cursors_cm cm cursors =
             ("{\"line\":" ^ (string_of_int cel) ^
             ", \"ch\":" ^ (string_of_int cec) ^ "}")),
           Json.unsafe_input (Js.string
-            ("{\"css\":\"background-color: " ^ color ^ "\"}")))
-    | _ -> ())) cursors
+            ("{\"css\":\"background-color: " ^ color ^ "\"}")))) :: acc
+    | _ -> acc)) [] cursors
 
-let rec send_to_server cm patch () : unit =
+let rec send_to_server cm patch oldmarks () : unit =
   let req = XmlHttpRequest.create () in
   let patch_string = Js.string (string_of_patch patch) in
   let cursor_from = cm##getCursor(Js.string "from") in
@@ -120,11 +122,13 @@ let rec send_to_server cm patch () : unit =
       let (q', p') = merge p q in
 
       let cursors = Util.to_list (Util.member "cursors" resp) in
-      apply_patch_cm cm p';
-      show_cursors_cm cm cursors;
-      ignore (Dom_html.window##setTimeout(
-        Js.wrap_callback (send_to_server cm q'), 500.0));
-      ()
+      cm##operation(Js.Unsafe.inject (fun _ ->
+        let () = apply_patch_cm cm p' in
+        let () = List.iter (fun m -> m##clear()) oldmarks in
+        let marks = show_cursors_cm cm cursors in
+        Dom_html.window##setTimeout(
+          Js.wrap_callback (send_to_server cm q' marks), 500.0)
+      ))
     | _ -> ()
   in
   req##onreadystatechange <- Js.wrap_callback handler;
@@ -145,7 +149,7 @@ let start _ =
   let cm = Js.Unsafe.js_expr "CodeMirror(document.body)" in
   let _ = cm##setValue(fulltext) in
   let _ = cm##on(Js.string "beforeChange", Js.Unsafe.inject handle_change) in
-  send_to_server cm empty_patch ();
+  send_to_server cm empty_patch [] ();
   Js._false
 
 let _ = Html.window##onload <- Html.handler start

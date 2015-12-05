@@ -25,10 +25,13 @@ let create_document getp postp =
 type client_info = {
   sid : string;
   doc_id : string;
+  mutable pos: ((int * int) * (int * int));
+  color: int;
   mutable last_patch : int;
 }
 
 let clients = Hashtbl.create 100
+
 let create_session doc_id =
   let rec try_create count =
     if count = 0 then err "could not generate a session id"
@@ -37,7 +40,13 @@ let create_session doc_id =
       if Hashtbl.mem clients sid then
         try_create (count - 1)
       else
-        let session =  {sid = sid; doc_id = doc_id; last_patch = 0} in
+        let session = {
+          sid = sid;
+          doc_id = doc_id;
+          last_patch = 0;
+          pos = ((0, 0), (0, 0));
+          color = Random.int 360
+        } in
         Hashtbl.add clients sid session;
         session
   in try_create 100
@@ -68,16 +77,28 @@ let patch_no_post_service =
     ~get_params:Eliom_parameter.unit
     (fun () () -> raise Eliom_common.Eliom_404)
 
-let patch_service_handler _ (sid, value) =
+let patch_service_handler _ (sid, (value, newpos)) =
   let patch_in = patch_of_string (Url.decode ~plus:false value) in
   let s = Hashtbl.find clients sid in
-  Lwt.return (string_of_patch (accept_patch s.doc_id s patch_in))
+  let cursorlist = Hashtbl.fold (fun cid c acc ->
+    if s.doc_id = c.doc_id && sid <> cid then
+      (`List [`Int c.color; `Int (fst (fst c.pos)); `Int (snd (fst c.pos));
+      `Int (fst (snd c.pos)); `Int (snd (snd c.pos))])::acc
+    else acc
+  ) clients [] in
+  s.pos <- newpos;
+  Lwt.return (Yojson.Basic.pretty_to_string (`Assoc [
+      ("cursors", `List cursorlist);
+      ("patch", `String (string_of_patch (accept_patch s.doc_id s patch_in)))
+    ]))
 
 let patch_service = 
    Eliom_registration.Html_text.register_post_service
     ~fallback: patch_no_post_service
-    ~post_params:
-      (Eliom_parameter.(string "sid") ** Eliom_parameter.(string "patch"))
+    ~post_params:Eliom_parameter.
+      (string "sid" ** (string "patch" **
+      (* Cursor position *)
+      ((int "csl" ** int "csc") ** (int "cel" ** int "cec"))))
    patch_service_handler
 
 let create_doc_service =

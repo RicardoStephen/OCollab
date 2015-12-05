@@ -122,13 +122,18 @@ let rec send_to_server cm patch oldmarks () : unit =
       let (q', p') = merge p q in
 
       let cursors = Util.to_list (Util.member "cursors" resp) in
-      cm##operation(Js.Unsafe.inject (fun _ ->
+      let _ = cm##operation(Js.Unsafe.inject (fun _ ->
         let () = apply_patch_cm cm p' in
         let () = List.iter (fun m -> m##clear()) oldmarks in
         let marks = show_cursors_cm cm cursors in
         Dom_html.window##setTimeout(
           Js.wrap_callback (send_to_server cm q' marks), 500.0)
-      ))
+      )) in
+      ()
+    | (XmlHttpRequest.DONE, 500) ->
+      let _ = Dom_html.window##alert(
+        Js.string "An error occurred. Please reload the page and try again.") in
+      ()
     | _ -> ()
   in
   req##onreadystatechange <- Js.wrap_callback handler;

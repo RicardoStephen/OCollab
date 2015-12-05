@@ -159,12 +159,9 @@ let start _ =
 
 let close _ =
   let req = XmlHttpRequest.create () in
-  req##_open(Js.string "GET", Js.string "/close", Js._true);
-  req##setRequestHeader(
-    Js.string "Content-type",
-    Js.string "application/x-www-form-urlencoded");
-  req##send((Js.string "sid=")##concat(sid));
-  ()
+  req##_open(Js.string "GET", (Js.string "/close?sid=")##concat(sid), Js._true);
+  req##send(Js.null);
+  Js._false
 
 let _ = Html.window##onload <- Html.handler start
 let _ = Html.window##onunload <- Html.handler close

@@ -162,7 +162,7 @@ let close_service =
   Eliom_registration.Html_text.register_service
     ~path:["close"]
     ~get_params:(string "sid")
-    (fun id () -> destroy_session sid)
+    (fun sid () -> destroy_session sid; Lwt.return "")
 
 let main_service =
   Eliom_registration.Html5.register_service

@@ -27,10 +27,13 @@ let apply_patch_cm cm p =
     let st = cm##posFromIndex(jsnum_of_int e.pos) in
     match e.op with
     | Insert ->
-      let _ = cm##replaceRange(Js.string e.text, st, st, Js.string "self") in ()
+      let _ = cm##replaceRange
+        (Js.string e.text, st, st, Js.string "self") in ()
     | Delete ->
-      let en = cm##posFromIndex(jsnum_of_int (e.pos + (String.length e.text))) in
-      let _ = cm##replaceRange(Js.string "", st, en, Js.string "self") in ()
+      let en = cm##posFromIndex
+        (jsnum_of_int (e.pos + (String.length e.text))) in
+      let _ = cm##replaceRange
+        (Js.string "", st, en, Js.string "self") in ()
   in
   cm##operation(Js.Unsafe.inject (fun _ -> List.iter apply_edit_cm p))
 
@@ -121,6 +124,10 @@ let rec send_to_server cm patch () : unit =
       show_cursors_cm cm cursors;
       ignore (Dom_html.window##setTimeout(
         Js.wrap_callback (send_to_server cm q'), 500.0));
+      ()
+    | (XmlHttpRequest.Done, 500) ->
+      let_ = Dom_html.window##alert(
+        Js.string "An error occurred. Please reload the page and try again.") in
       ()
     | _ -> ()
   in

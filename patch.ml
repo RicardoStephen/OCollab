@@ -1,19 +1,13 @@
 type operation = Insert | Delete
-
 type edit = {op : operation; pos : int; text : string}
-
 type patch = edit list
-
 type document_text = string
 
 (* Implementation *)
 
 let empty_patch = []
-
 let empty_doc = ""
-
 let compose p1 p2 = p1 @ p2
-
 let add_edit ed p = compose p [ed]
 
 let inverse p =
@@ -70,7 +64,9 @@ let merge p1 p2 =
           ([{e2 with pos = e1.pos}],
           compose
             (nonempty {e1 with text = slice e1.text 0 (e2.pos - e1.pos)})
-            (nonempty {e1 with pos = e1.pos + len2; text = slice e1.text (e2.pos - e1.pos) len1}))
+            (nonempty {
+              e1 with pos = e1.pos + len2;
+              text = slice e1.text (e2.pos - e1.pos) len1}))
   in
   let rec go p1 p2 =
     match (p1, p2) with
@@ -96,8 +92,8 @@ let apply_patch doc p =
     let len = String.length doc in
     let before = String.sub doc 0 e.pos in
     match e.op with
-    | Insert -> before ^ e.text ^ (String.sub doc e.pos (len - e.pos))
-    | Delete -> before ^ (String.sub doc (e.pos + String.length e.text) (len - e.pos - (String.length e.text)))
+    | Insert -> before ^ e.text ^ (slice doc e.pos len)
+    | Delete -> before ^ (slice doc (e.pos + String.length e.text) len)
   in
   List.fold_left apply_edit doc p
 

@@ -116,6 +116,8 @@ let create_doc_service =
           | false -> err "Could not set document metadata"
           | true -> Lwt.return ("doc?id=" ^ newid))
 
+let genuri ls = make_uri ~service:(static_dir ()) ls
+
 let access_doc_service = 
   Eliom_registration.Html5.register_service
     ~path:["doc"]
@@ -152,9 +154,9 @@ let access_doc_service =
             (head
               (title (pcdata "Unknown Document"))
               [script_node;
-              css_link ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.css"]) ();
-              js_script ~uri:(make_uri ~service:(static_dir ()) ["codemirror-5.8";"lib";"codemirror.js"]) ();
-              js_script ~uri:(make_uri ~service:(static_dir ()) ["gui.js"]) ()])
+              css_link ~uri:(genuri ["codemirror-5.8";"lib";"codemirror.css"]) ();
+              js_script ~uri:(genuri ["codemirror-5.8";"lib";"codemirror.js"]) ();
+              js_script ~uri:(genuri ["gui.js"]) ()])
             (body [h1 [pcdata ("Title: "^x.title)]])))
 
 let get_full_doc_service =
@@ -175,8 +177,7 @@ let main_service =
         html (head (title (pcdata "Collaborative Document Editor")) [] )
         (body [
           (h1 [pcdata ("Home")]);
-          (h3 [pcdata ("Welcome to the home page, where you can create you document.")]);
-          (h3 [pcdata ("Set a document name, and press \"Create\"")]);
+          (h3 [pcdata ("Set a document title to make a new document.")]);
           (get_form create_doc_service (fun _ -> [
             raw_input ~input_type:`Text ~name:"title" ();
             raw_input ~input_type:`Submit ~value:"Create" ()

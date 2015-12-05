@@ -1,4 +1,3 @@
-
 # Bytecode compiler
 OCC=ocamlfind ocamlc
 # Native compiler
@@ -27,22 +26,9 @@ server:
 	$(MAKE) clean
 	$(MAKE) run
 
-create_doc.js:
-	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/create_doc.o static/create_doc.ml
-	js_of_ocaml static/create_doc.o
-
 gui.js: static/gui.ml patch.cmo
 	ocamlfind ocamlc -package js_of_ocaml,yojson -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o patch.cmo static/gui.ml
 	js_of_ocaml --opt 3 static/gui.o
-
-gui_test.js: gui_test.ml
-	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o gui_test.o gui_test.ml
-	js_of_ocaml --opt 3 gui_test.o
-
-eliom_test: 
-	ocamlfind ocamlc -package js_of_ocaml -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o eliom_test/static/gui_js.byte eliom_test/gui_js.ml
-	js_of_ocaml eliom_test/static/gui_js.byte
-	cd eliom_test && $(MAKE) test.byte
 
 test_%: test_%.ml patch.cmx $(TEST_LIBS)
 	$(OCN) -o $@ -linkall -thread -linkpkg -package $(TEST_PKGS) -syntax camlp4o patch.cmx -package pa_ounit.syntax $(TEST_LIBS) $< 

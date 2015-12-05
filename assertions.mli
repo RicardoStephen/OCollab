@@ -1,3 +1,5 @@
+(** Included so we could use the 3110 testing tools *)
+
 exception Assert_true of string
 (** [assert_true e] Returns [unit] if [e] is the boolean
     [true] and raises [Assert_true] otherwise. *)

@@ -12,18 +12,13 @@ TEST_PKGS=pa_ounit,yojson,redis
 
 TEST_LIBS=storage.cmx document.cmx serializer.cmx assertions.cmx
 
-.PHONY: all eliom_test server
+.PHONY: all
 
 .PRECIOUS: %.cmi %.cmo %.cmx %.o
 
 all: run
 
 compile: patch.cmo document.cmo storage.cmo editor.cmo
-
-server:
-	$(MAKE) gui.js
-	$(MAKE) clean
-	$(MAKE) run
 
 gui.js: static/gui.ml patch.cmo
 	ocamlfind ocamlc -package js_of_ocaml,yojson -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o patch.cmo static/gui.ml
@@ -57,6 +52,11 @@ clean:
 	@-rm *.cmo
 	@-rm *.cmx
 	@-rm *.o
+	@-rm ./static/*.cmi
+	@-rm ./static/*.cmo
+	@-rm ./static/*.cmx
+	@-rm ./static/*.o
+	@-rm ./static/*.js
 	@-rm test_patch
 	@-rm test_storage
 

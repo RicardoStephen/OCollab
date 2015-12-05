@@ -157,4 +157,14 @@ let start _ =
   send_to_server cm empty_patch [] ();
   Js._false
 
+let close _ =
+  let req = XmlHttpRequest.create () in
+  req##_open(Js.string "GET", Js.string "/close", Js._true);
+  req##setRequestHeader(
+    Js.string "Content-type",
+    Js.string "application/x-www-form-urlencoded");
+  req##send((Js.string "sid=")##concat(sid));
+  ()
+
 let _ = Html.window##onload <- Html.handler start
+let _ = Html.window##onunload <- Html.handler close

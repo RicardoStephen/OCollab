@@ -1,14 +1,11 @@
-open Eliom_lib
-open Eliom_content
 open Eliom_parameter
-open Storage
-open Document
 open Eliom_content.Html5.D
 open Eliom_service
+
+open Storage
+open Document
 open Netencoding
 open Patch
-
-(* TODO better handle error cases *)
 
 let () = Ocsigen_config.set_maxrequestbodysizeinmemory 1048576
 
@@ -110,7 +107,7 @@ let create_doc_service =
     (fun (title) () ->
        let title = Url.decode title in
        match document_create ctl with
-       | None -> Lwt.return "" (* TODO better way to handle *)
+       | None -> Lwt.return ""
        | Some newid -> 
           match set_document_metadata ctl newid {title} with
           | false -> err "Could not set document metadata"

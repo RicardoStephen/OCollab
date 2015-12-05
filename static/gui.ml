@@ -27,10 +27,13 @@ let apply_patch_cm cm p =
     let st = cm##posFromIndex(jsnum_of_int e.pos) in
     match e.op with
     | Insert ->
-      let _ = cm##replaceRange(Js.string e.text, st, st, Js.string "self") in ()
+      let _ = cm##replaceRange
+        (Js.string e.text, st, st, Js.string "self") in ()
     | Delete ->
-      let en = cm##posFromIndex(jsnum_of_int (e.pos + (String.length e.text))) in
-      let _ = cm##replaceRange(Js.string "", st, en, Js.string "self") in ()
+      let en = cm##posFromIndex
+        (jsnum_of_int (e.pos + (String.length e.text))) in
+      let _ = cm##replaceRange
+        (Js.string "", st, en, Js.string "self") in ()
   in
   cm##operation(Js.Unsafe.inject (fun _ -> List.iter apply_edit_cm p))
 

@@ -9,7 +9,7 @@ From a clean [cs3110 virtual machine](https://cornell.box.com/cs3110vm-2015fa):
 make install && make
 ```
 
-Point the browser to http://localhost:8080 and have fun!
+Point the browser to <http://localhost:8080> and have fun!
 
 ## Troubleshooting
 
@@ -30,4 +30,8 @@ Upon installation of redis-server from apt, an instance of the server should sta
 ### Port conflict
 
 Ocsigenserver, the web server, is set to run as vagrant on port 8080. If another program is using that port, please stop it before running `make` again.
+
+## Online Demo
+
+An online demo is available at <ocollab.sc-wu.com>.
 

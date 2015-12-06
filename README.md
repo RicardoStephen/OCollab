@@ -33,5 +33,5 @@ Ocsigenserver, the web server, is set to run as vagrant on port 8080. If another
 
 ## Online Demo
 
-An online demo is available at <ocollab.sc-wu.com>.
+An online demo is available at <http://ocollab.sc-wu.com>.
 

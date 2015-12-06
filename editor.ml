@@ -180,12 +180,13 @@ let access_doc_service =
         Lwt.return Eliom_content.Html5.D.(
           html
             (head
-              (title (pcdata "Unknown Document"))
+              (title (pcdata ("Ocollab - " ^ x.title)))
               [script_node;
               css_link ~uri:(genuri ["codemirror-5.8";"lib";"codemirror.css"]) ();
+              css_link ~uri:(genuri ["css";"editor.css"]) ();
               js_script ~uri:(genuri ["codemirror-5.8";"lib";"codemirror.js"]) ();
               js_script ~uri:(genuri ["gui.js"]) ()])
-            (body [h1 [pcdata ("Title: "^x.title)]])))
+            (body [h1 [pcdata (x.title)]])))
 
 let close_service =
   Eliom_registration.Html_text.register_service
@@ -199,7 +200,10 @@ let main_service =
     ~get_params:unit
     (fun () () ->
       Lwt.return Eliom_content.Html5.D.(
-        html (head (title (pcdata "Collaborative Document Editor")) [] )
+        html
+          (head
+            (title (pcdata "Collaborative Document Editor"))
+            [css_link ~uri:(genuri ["css";"editor.css"]) ()] )
         (body [
           (h1 [pcdata ("Home")]);
           (h3 [pcdata ("Set a document title to make a new document.")]);

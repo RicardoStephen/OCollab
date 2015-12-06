@@ -19,9 +19,9 @@ TEST_LIBS=storage.cmx document.cmx serializer.cmx assertions.cmx
 all: compile
 	@-mkdir -p server/log
 	@-mkdir -p server/data
-	ocsigenserver -c editor.conf
+	ocsigenserver -c server.conf
 
-compile: patch.cmo document.cmo storage.cmo editor.cmo gui.js
+compile: patch.cmo document.cmo storage.cmo server.cmo gui.js
 
 gui.js: static/gui.ml patch.cmo
 	ocamlfind ocamlc -package js_of_ocaml,yojson -package js_of_ocaml.syntax -syntax camlp4o -linkpkg -o static/gui.o patch.cmo static/gui.ml

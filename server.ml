@@ -121,7 +121,7 @@ let patch_service_handler _ (sid, (value, newpos)) =
       ("patch", `String (string_of_patch (accept_patch s.doc_id s patch_in)))
     ]))
 
-let patch_service = 
+let patch_service =
    Eliom_registration.Html_text.register_post_service
     ~fallback: patch_no_post_service
     ~post_params:Eliom_parameter.
@@ -139,14 +139,14 @@ let create_doc_service =
        let title = Url.decode title in
        match document_create ctl with
        | None -> Lwt.return ""
-       | Some newid -> 
+       | Some newid ->
           match set_document_metadata ctl newid {title} with
           | false -> err "Could not set document metadata"
           | true -> Lwt.return ("doc?id=" ^ newid))
 
 let genuri ls = make_uri ~service:(static_dir ()) ls
 
-let access_doc_service = 
+let access_doc_service =
   Eliom_registration.Html5.register_service
     ~path:["doc"]
     ~get_params:(string "id")
@@ -161,7 +161,7 @@ let access_doc_service =
       match get_document_metadata ctl id with
       | None -> Lwt.return Eliom_content.Html5.D.(
         html
-          (head (title (pcdata "Unknown Document")) []) 
+          (head (title (pcdata "Unknown Document")) [])
           (body [h1 [pcdata ("Document "^id^" does not exist.")]]))
       | Some x ->
         let text = (
@@ -206,11 +206,12 @@ let main_service =
             [css_link ~uri:(genuri ["css";"editor.css"]) ()] )
         (body [
           (h1 [pcdata ("Home")]);
-          (h3 [pcdata ("Set a document title to make a new document.")]);
+          (h3 [pcdata ("Set a document title to make a new document.
+               To share the document with a friend, send them the link.")]);
           (get_form create_doc_service (fun _ -> [
             raw_input ~input_type:`Text ~name:"title" ();
             raw_input ~input_type:`Submit ~value:"Create" ()
-          ]))  
+          ]))
         ])
       )
     )

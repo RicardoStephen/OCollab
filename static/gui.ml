@@ -39,7 +39,6 @@ let apply_patch_cm cm p =
 
 let show_cursors_cm cm cursors =
   let open Yojson.Basic in
-  let last_line = Js.to_string (Js.string (cm##lineCount())) in
   List.fold_left (fun acc c -> (
     match Util.to_list c with
     | jhue::jcsl::jcsc::jcel::jcec::[] ->
@@ -49,15 +48,6 @@ let show_cursors_cm cm cursors =
       let cel = Util.to_int jcel in
       let cec = Util.to_int jcec in
       let color = "hsl(" ^ (string_of_int hue) ^ ", 100%, 50%)" in
-      (*
-      cm##markText(
-        Json.unsafe_input (Js.string ("{\"line\":0, \"ch\":0}")),
-        Json.unsafe_input (Js.string ("{\"line\":"
-          ^ last_line ^ ", \"ch\":0}")),
-        Json.unsafe_input (Js.string
-          ("{\"css\":\"background-color: transparent;" ^
-          "border: none; margin: 0px\"}")));
-      *)
       if csl = cel && csc = cec then
         (* Show a single cursor line *)
         if csc = 0 then

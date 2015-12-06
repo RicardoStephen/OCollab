@@ -151,7 +151,7 @@ let close _ =
   let req = XmlHttpRequest.create () in
   req##_open(Js.string "GET", (Js.string "/close?sid=")##concat(sid), Js._true);
   req##send(Js.null);
-  Js._false
+  failwith "Shouldn't be reached"
 
 let _ = Html.window##onload <- Html.handler start
-let _ = Html.window##onunload <- Html.handler close
+let _ = Html.window##onbeforeunload <- Html.handler close

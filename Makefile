@@ -28,7 +28,7 @@ gui.js: static/gui.ml patch.cmo
 	js_of_ocaml --opt 3 static/gui.o
 
 test_%: test_%.ml patch.cmx $(TEST_LIBS)
-	$(OCN) -o $@ -linkall -thread -linkpkg -package $(TEST_PKGS) -syntax camlp4o patch.cmx -package pa_ounit.syntax $(TEST_LIBS) $< 
+	$(OCN) -o $@ -linkall -thread -linkpkg -package $(TEST_PKGS) -syntax camlp4o patch.cmx -package pa_ounit.syntax $(TEST_LIBS) $<
 
 %.cmo: %.ml %.cmi
 	$(OCC) -o $@ -linkpkg -package $(SERVER_PKGS) -thread -c $<

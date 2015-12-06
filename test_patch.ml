@@ -1,10 +1,12 @@
 open Patch
 open Assertions
 
+(* Call f on a for a = n, n-1, ..., 1 *)
 let rec repeat n f =
   if n = 0 then () else
   let _ = f n in repeat (n - 1) f
 
+(*Generate random test of length n *)
 let random_text n =
   let random_char () = Char.escaped (Char.chr (65 + (Random.int 26))) in
   let rec go s n =
@@ -15,6 +17,7 @@ let random_text n =
 
 let rand0 n = if n = 0 then 0 else (Random.int n) mod n
 
+(* Do random edit operation on the document *)
 let random_edit doc =
   let doc_size = String.length doc in
   let op = if (rand0 2 = 0) || (doc_size = 0) then Insert else Delete in
@@ -25,6 +28,7 @@ let random_edit doc =
     else String.sub doc pos (rand0 (doc_size - pos)) in
   {op = op; pos = pos; text = text}
 
+(* Return the change in position of the cursor for the edit *)
 let offset edit =
   let sign edit =
     (match edit.op with
@@ -33,12 +37,14 @@ let offset edit =
   in
   (sign edit) * (String.length edit.text)
 
+(* Do n random edits *)
 let rec random_edits n doc =
   if n = 0 then ([], doc) else
   let edit = random_edit doc in
   let (p, doc') = random_edits (n - 1) (apply_patch doc [edit]) in
   (compose [edit] p, doc')
 
+(* Generate random patch *)
 let random_patch max_size doc =
   let num_edits = Random.int max_size in
   random_edits num_edits doc
@@ -54,7 +60,6 @@ TEST_UNIT =
 
 (* Applying patch composed with its inverse to empty document results in the
  * empty document. *)
-
 TEST_UNIT =
   repeat 1000 (fun _ ->
   let doc_text = empty_doc in (* will just be "" *)

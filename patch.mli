@@ -1,4 +1,4 @@
-(*
+(**
  * Patch Module
  *
  *)
@@ -11,33 +11,33 @@ type patch = edit list
 
 type document_text = string
 
-(*
+(**
  * A patch which represents doing nothing to a document.
  *)
 val empty_patch : patch
 
-(*
+(**
  * Empty document text
  *)
 val empty_doc: document_text
 
-(*
+(**
  * Adds an operation to a patch.
  *)
 val add_edit : edit -> patch -> patch
 
-(*
+(**
  * Compute the inverse of a patch, which represents undoing a patch.
  *)
 val inverse : patch -> patch
 
-(*
+(**
  * Composes two patches in order to form a new patch representing doing patch1
  * and then patch2.
  *)
 val compose : patch -> patch -> patch
 
-(*
+(**
  * Identities for empty, inverse, and compose:
  * compose empty p1           = p1
  * compose p1 empty           = p1
@@ -46,7 +46,7 @@ val compose : patch -> patch -> patch
  * compose (inverse p1) p1    = empty
  *)
 
-(*
+(**
  * Given two patches, computes two other patches which can be composed to bring
  * the two patches to a common state.
  *
@@ -58,27 +58,27 @@ val compose : patch -> patch -> patch
  *)
 val merge : patch -> patch -> patch * patch
 
-(*
+(**
  * Applies a patch to modify a document represented as a string.
  *)
 val apply_patch : document_text -> patch -> document_text
 
-(*
+(**
  * Converts a patch to a json representation.
  *)
 val json_of_patch : patch -> Yojson.Basic.json
 
-(*
+(**
  * Converts a patch to a string representation.
  *)
 val string_of_patch : patch -> string
 
-(*
+(**
  * Converts a string representation to a patch.
  *)
 val patch_of_json : Yojson.Basic.json -> patch
 
-(*
+(**
  * Converts a string representation to a patch.
  *)
 val patch_of_string : string -> patch

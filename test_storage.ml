@@ -4,9 +4,9 @@ open Storage
 open Redis
 open Assertions
 
+(* Create a document and return its id *)
 let get_doc ctl =
   let opt = document_create ctl in
-  (* Returns document's id *)
   match opt with Some d -> d | None -> "Failed to create doc"
 
 (* Test whether connection was established *)

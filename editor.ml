@@ -29,7 +29,15 @@ type client_info = {
   color: int
 }
 
+(* All connected clients by session id *)
 let clients = Hashtbl.create 100
+
+(* All session ids by document id *)
+let docsesh = Hashtbl.create 100
+
+(* Document mutexes *)
+let doc_locks = Hashtbl.create 100
+
 let create_session doc_id =
   let rec try_create count =
     if count = 0 then err "could not generate a session id"
@@ -45,13 +53,32 @@ let create_session doc_id =
           pos = ((0, 0), (0, 0));
           color = Random.int 360
         } in
-        Hashtbl.add clients sid session;
+        let () = Hashtbl.add clients sid session in
+        let () =
+          if Hashtbl.mem docsesh doc_id then
+            Hashtbl.add (Hashtbl.find docsesh doc_id) sid ()
+          else
+            let sessions = Hashtbl.create 100 in
+            Hashtbl.add sessions sid ();
+            Hashtbl.add docsesh doc_id sessions
+        in
         session
   in try_create 100
 
-let destroy_session sid = Hashtbl.remove clients sid
-
-let doc_locks = Hashtbl.create 100
+let destroy_session sid =
+  let c = Hashtbl.find clients sid in
+  Hashtbl.remove clients sid;
+  if Hashtbl.mem docsesh c.doc_id then
+    let sessions = Hashtbl.find docsesh c.doc_id in
+    Hashtbl.remove sessions sid;
+    if Hashtbl.length sessions = 0 then
+      let () = Hashtbl.remove doc_locks c.doc_id in
+      let () = Hashtbl.remove docsesh c.doc_id in
+      ()
+    else
+      ()
+  else
+    ()
 
 let accept_patch id session p =
   Mutex.lock (Hashtbl.find doc_locks id);
@@ -80,12 +107,14 @@ let patch_no_post_service =
 let patch_service_handler _ (sid, (value, newpos)) =
   let patch_in = patch_of_string (Url.decode ~plus:false value) in
   let s = Hashtbl.find clients sid in
-  let cursorlist = Hashtbl.fold (fun cid c acc ->
-    if s.doc_id = c.doc_id && sid <> cid then
+  let sessions = Hashtbl.find docsesh s.doc_id in
+  let cursorlist = Hashtbl.fold (fun cid () acc ->
+    let c = Hashtbl.find clients cid in
+    if sid <> cid then
       (`List [`Int c.color; `Int (fst (fst c.pos)); `Int (snd (fst c.pos));
       `Int (fst (snd c.pos)); `Int (snd (snd c.pos))])::acc
     else acc
-  ) clients [] in
+  ) sessions [] in
   s.pos <- newpos;
   Lwt.return (Yojson.Basic.pretty_to_string (`Assoc [
       ("cursors", `List cursorlist);
